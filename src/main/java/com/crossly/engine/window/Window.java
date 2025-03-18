@@ -2,10 +2,7 @@ package com.crossly.engine.window;
 
 import com.crossly.engine.Engine;
 import com.crossly.engine.input.Input;
-import org.lwjgl.glfw.GLFWCursorPosCallback;
-import org.lwjgl.glfw.GLFWKeyCallback;
-import org.lwjgl.glfw.GLFWMouseButtonCallback;
-import org.lwjgl.glfw.GLFWScrollCallback;
+import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.GL;
 
 import static org.lwjgl.glfw.GLFW.*;
@@ -52,6 +49,15 @@ public class Window {
 			@Override
 			public void invoke(long window, double x, double y) {
 				input.setScrollAmount(x, y);
+			}
+		});
+		glfwSetFramebufferSizeCallback(window, new GLFWFramebufferSizeCallback() {
+			@Override
+			public void invoke(long window, int width, int height) {
+				engine.setWindowWidth(width);
+				engine.setWindowHeight(height);
+				engine.onResize();
+				glViewport(0, 0, width, height);
 			}
 		});
 	}
