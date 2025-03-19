@@ -4,6 +4,10 @@ import com.crossly.engine.input.Input;
 import com.crossly.engine.time.Timer;
 import com.crossly.engine.window.Window;
 
+import java.io.File;
+import java.net.URLDecoder;
+import java.nio.charset.Charset;
+
 public abstract class Engine {
 
 	private int windowWidth;
@@ -75,5 +79,16 @@ public abstract class Engine {
 
 	public void setWindowResizable(boolean windowResizable) {
 		this.windowResizable = windowResizable;
+	}
+
+	// Static utility functions
+	public static String getAbsolutePath(String path) {
+		var url = Engine.class.getClassLoader().getResource(path);
+		if (url != null)
+			return URLDecoder.decode(url.getFile().substring(1), Charset.defaultCharset());
+		File file = new File(path);
+		if (!file.isFile())
+			throw new RuntimeException("File '" + path + "' does not exist!");
+		return file.getAbsolutePath();
 	}
 }
