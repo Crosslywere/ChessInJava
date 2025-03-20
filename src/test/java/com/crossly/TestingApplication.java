@@ -1,6 +1,7 @@
 package com.crossly;
 
 import com.crossly.engine.Engine;
+import com.crossly.engine.audio.AudioSource;
 import com.crossly.engine.graphics.Framebuffer;
 import com.crossly.engine.graphics.Mesh;
 import com.crossly.engine.graphics.Shader;
@@ -15,6 +16,8 @@ public class TestingApplication extends Engine {
 	private Shader shader;
 	private Mesh mesh;
 	private Framebuffer screenFramebuffer;
+
+	private AudioSource audioSource;
 
 	public TestingApplication() {
 		super();
@@ -44,6 +47,7 @@ public class TestingApplication extends Engine {
 				},
 				false);
 		screenFramebuffer = new Framebuffer(getWindowWidth(), getWindowHeight());
+		audioSource = new AudioSource("stab-f-01-brvhrtz-224599.mp3", AudioSource.Format.MP3);
 	}
 
 	@Override
@@ -54,15 +58,28 @@ public class TestingApplication extends Engine {
 			time -= INTERVAL;
 			frames = 0;
 		}
+
 		var mousePos = input.getMousePos();
 		int x = mousePos.x(), y = getWindowHeight() - mousePos.y();
 		shader.use();
-		if (screenFramebuffer.getId(x, y) == 1)
+		if (screenFramebuffer.getId(x, y) == 1) {
 			shader.setFloat("uTime", Timer.getTotalTime());
-		else
+			if (input.isButtonJustPressed(Input.MOUSE_BUTTON_LEFT)) {
+				audioSource.play();
+			}
+			shader.setFloat("uDelta", audioSource.getElapsedTime());
+		} else {
 			shader.setFloat("uTime", 0f);
+		}
+
 		if (input.isKeyPressed(Input.KEY_ESCAPE))
 			running = false;
+
+		int gain = input.getScrollAmount();
+		if (gain != 0) {
+			audioSource.setVolume(Math.clamp(audioSource.getVolume() + (gain * .05f), 0f, 1f));
+			System.out.println("Audio Volume - " + audioSource.getVolume());
+		}
 	}
 
 	@Override
@@ -84,6 +101,7 @@ public class TestingApplication extends Engine {
 		shader.delete();
 		mesh.delete();
 		screenFramebuffer.delete();
+		audioSource.delete();
 	}
 
 	@Override
