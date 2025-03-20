@@ -4,7 +4,9 @@ layout (location = 1) out int oID;
 in vec2 iTexCoord;
 in vec3 iNormal;
 uniform int uID;
+uniform float uTime;
 void main() {
     oID = uID;
-    oColorAttachment = vec4(iNormal, 1.0);
+    float t = cos(uTime) * 0.5 + 0.5;
+    oColorAttachment = vec4(iNormal * t, 1.0);
 }

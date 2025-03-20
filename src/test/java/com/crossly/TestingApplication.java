@@ -14,6 +14,7 @@ public class TestingApplication extends Engine {
 	final float INTERVAL = 0.5f;
 	private Shader shader;
 	private Mesh mesh;
+	private Framebuffer screenFramebuffer;
 
 	public TestingApplication() {
 		super();
@@ -42,6 +43,7 @@ public class TestingApplication extends Engine {
 						0, 1, 2
 				},
 				false);
+		screenFramebuffer = new Framebuffer(getWindowWidth(), getWindowHeight());
 	}
 
 	@Override
@@ -52,16 +54,27 @@ public class TestingApplication extends Engine {
 			time -= INTERVAL;
 			frames = 0;
 		}
+		var mousePos = input.getMousePos();
+		int x = mousePos.x(), y = getWindowHeight() - mousePos.y();
+		shader.use();
+		if (screenFramebuffer.getId(x, y) == 1)
+			shader.setFloat("uTime", Timer.getTotalTime());
+		else
+			shader.setFloat("uTime", 0f);
 		if (input.isKeyPressed(Input.KEY_ESCAPE))
 			running = false;
 	}
 
 	@Override
 	public void onRender() {
-		Framebuffer.clear();
-		shader.use();
-		shader.setInt("uID", 1);
-		mesh.draw();
+		Framebuffer.drawTo(screenFramebuffer);
+		{	Framebuffer.clear();
+			shader.use();
+			shader.setInt("uID", 1);
+			mesh.draw();
+		}
+		Framebuffer.unbind();
+		Framebuffer.renderToScreen(screenFramebuffer);
 		frames++;
 	}
 
@@ -70,6 +83,7 @@ public class TestingApplication extends Engine {
 		super.onExit();
 		shader.delete();
 		mesh.delete();
+		screenFramebuffer.delete();
 	}
 
 	@Override
