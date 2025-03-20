@@ -1,5 +1,6 @@
 package com.crossly.engine;
 
+import com.crossly.engine.audio.AudioManager;
 import com.crossly.engine.input.Input;
 import com.crossly.engine.time.Timer;
 import com.crossly.engine.window.Window;
@@ -38,6 +39,7 @@ public abstract class Engine {
 		Input input;
 		Window window = new Window(this, input = new Input());
 		Timer.init();
+		AudioManager audioManager = new AudioManager();
 		onCreate();
 		while (window.isOpen() && running) {
 			onUpdate(input);
@@ -45,6 +47,7 @@ public abstract class Engine {
 			input.update();
 			Timer.update();
 		}
+		audioManager.cleanup();
 		onExit();
 		window.cleanup();
 	}
