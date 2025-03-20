@@ -1,6 +1,8 @@
 package com.crossly;
 
 import com.crossly.engine.Engine;
+import com.crossly.engine.graphics.Framebuffer;
+import com.crossly.engine.graphics.Mesh;
 import com.crossly.engine.graphics.Shader;
 import com.crossly.engine.input.Input;
 import com.crossly.engine.time.Timer;
@@ -11,6 +13,7 @@ public class TestingApplication extends Engine {
 	private int frames = 0;
 	final float INTERVAL = 0.5f;
 	private Shader shader;
+	private Mesh mesh;
 
 	public TestingApplication() {
 		super();
@@ -34,6 +37,22 @@ public class TestingApplication extends Engine {
 					gl_FragColor = vec4(1.0);
 				}""",
 				false);
+		mesh = new Mesh(
+				new float[]{
+						0.0f, 0.5f,
+						0.5f,-0.5f,
+						-.5f,-0.5f
+				},
+				null,
+				new float[]{
+						1f, 0f, 0f,
+						0f, 1f, 0f,
+						0f, 0f, 1f,
+				},
+				new int[]{
+						0, 1, 2
+				},
+				false);
 	}
 
 	@Override
@@ -50,6 +69,10 @@ public class TestingApplication extends Engine {
 
 	@Override
 	public void onRender() {
+		Framebuffer.clear();
+		shader.use();
+		shader.setInt("uID", 1);
+		mesh.draw();
 		frames++;
 	}
 
@@ -57,6 +80,7 @@ public class TestingApplication extends Engine {
 	public void onExit() {
 		super.onExit();
 		shader.delete();
+		mesh.delete();
 	}
 
 	@Override
