@@ -1,5 +1,8 @@
 package com.crossly.engine.graphics;
 
+import org.joml.Matrix4f;
+import org.joml.Vector2f;
+import org.joml.Vector3f;
 import org.lwjgl.opengl.GL33;
 
 import java.io.IOException;
@@ -50,6 +53,28 @@ public class Shader {
 		glDeleteProgram(program);
 	}
 
+	public void setInt(String name, int value) {
+		glUniform1i(getUniformLocation(name), value);
+	}
+
+	public void setFloat(String name, float value) {
+		glUniform1f(getUniformLocation(name), value);
+	}
+
+	public void setFloat2(String name, Vector2f value) {
+		glUniform2f(getUniformLocation(name), value.x, value.y);
+	}
+
+	public void setFloat3(String name, Vector3f value) {
+		glUniform3f(getUniformLocation(name), value.x, value.y, value.z);
+	}
+
+	public void setMatrix4(String name, Matrix4f value) {
+		float[] matrix = new float[16];
+		value.get(matrix);
+		glUniformMatrix4fv(getUniformLocation(name), false, matrix);
+	}
+
 	private static int createShader(String source, int type) {
 		int shader = glCreateShader(type);
 		glShaderSource(shader, source);
@@ -57,17 +82,14 @@ public class Shader {
 		int success = glGetShaderi(shader, GL_COMPILE_STATUS);
 		if (success == 0)
 			throw new RuntimeException(glGetShaderInfoLog(shader));
-
 		return shader;
 	}
 
 	private static String getSourceUnpacked(String path, ArrayList<String> includedPaths) {
 		try {
 			String source = new String(Files.readAllBytes(Paths.get(path)));
-			if (!source.contains("#include")) {
-				System.out.println(source);
+			if (!source.contains("#include"))
 				return source;
-			}
 			Scanner scn = new Scanner(source);
 			StringBuilder builder = new StringBuilder();
 			while (scn.hasNextLine()) {
@@ -77,7 +99,7 @@ public class Shader {
 					if (includedPaths.contains(includeFile))
 						continue;
 					includedPaths.add(includeFile);
-					builder.append(getSourceUnpacked(path.substring(0, path.lastIndexOf('/')) + includeFile, includedPaths))
+					builder.append(getSourceUnpacked(path.substring(0, path.lastIndexOf('/') + 1) + includeFile, includedPaths))
 							.append('\n');
 				} else
 					builder.append(line).append('\n');
