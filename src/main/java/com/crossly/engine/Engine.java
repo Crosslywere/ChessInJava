@@ -47,8 +47,8 @@ public abstract class Engine {
 			input.update();
 			Timer.update();
 		}
-		audioManager.cleanup();
 		onExit();
+		audioManager.cleanup();
 		window.cleanup();
 	}
 
