@@ -25,18 +25,7 @@ public class TestingApplication extends Engine {
 
 	@Override
 	public void onCreate() {
-		shader = new Shader("""
-				#version 330 core
-				layout (location = 0) in vec3 aPos;
-				void main() {
-					gl_Position = vec4(aPos, 1.0);
-				}""",
-				"""
-				#version 330 core
-				void main() {
-					gl_FragColor = vec4(1.0);
-				}""",
-				false);
+		shader = new Shader("test_simple.vert", "test_simple.frag");
 		mesh = new Mesh(
 				new float[]{
 						0.0f, 0.5f,
