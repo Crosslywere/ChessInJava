@@ -47,6 +47,11 @@ public class AudioSource {
 		}
 	}
 
+	public AudioSource(String filepath, Format type, float volume) {
+		this(filepath, type);
+		setVolume(volume);
+	}
+
 	public void delete() {
 		alDeleteSources(source);
 		alDeleteBuffers(buffer);
