@@ -31,15 +31,17 @@ public class AudioSource {
 		try {
 			int format;
 			ByteBuffer audioBuffer;
-			switch (type) {
-				case MP3:
+			format = switch (type) {
+				case MP3 -> {
 					audioBuffer = decodeMp3(filepath);
-					format = AL_FORMAT_STEREO16;
-					break;
-				default:
+					yield AL_FORMAT_STEREO16;
+				}
+				case WAV -> {
 					audioBuffer = decodeWav(filepath);
-					format = AL_FORMAT_MONO16;
-			}
+					yield AL_FORMAT_MONO16;
+				}
+				case UNSPECIFIED -> throw new UnsupportedOperationException("Unspecified audio format cannot be decoded");
+			};
 			alBufferData(buffer, format, audioBuffer, 44100);
 			alSourcei(source, AL_BUFFER, buffer);
 		} catch (Exception e) {
