@@ -173,9 +173,7 @@ public class Input {
 		scrollAmount = new Vector2i();
 		buttonsLast.clear();
 		buttonsLast.addAll(buttonsPressed);
-		buttonsPressed.clear();
 		keysLast.clear();
 		keysLast.addAll(keysPressed);
-		keysPressed.clear();
 	}
 }
