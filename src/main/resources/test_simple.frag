@@ -6,8 +6,11 @@ in vec3 iNormal;
 uniform int uID;
 uniform float uTime;
 uniform float uDelta;
+uniform sampler2D uTexture;
 void main() {
     oID = uID;
     float t = cos(uTime + uDelta) * 0.5 + 0.5;
-    oColorAttachment = vec4(iNormal * t, 1.0);
+    vec3 imgSample = vec3(texture2D(uTexture, iTexCoord));
+    vec3 oColor = clamp(iNormal + t, 0.0, 1.0) * imgSample;
+    oColorAttachment = vec4(oColor, 1.0);
 }

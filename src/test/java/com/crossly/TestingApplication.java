@@ -2,10 +2,7 @@ package com.crossly;
 
 import com.crossly.engine.Engine;
 import com.crossly.engine.audio.AudioSource;
-import com.crossly.engine.graphics.Camera3D;
-import com.crossly.engine.graphics.Framebuffer;
-import com.crossly.engine.graphics.Mesh;
-import com.crossly.engine.graphics.Shader;
+import com.crossly.engine.graphics.*;
 import com.crossly.engine.input.Input;
 import com.crossly.engine.time.Timer;
 import org.joml.Matrix4f;
@@ -18,6 +15,7 @@ public class TestingApplication extends Engine {
 	private Shader shader;
 	private Mesh mesh;
 	private Framebuffer screenFramebuffer;
+	private ImageTexture image;
 
 	private AudioSource audioSource;
 
@@ -42,7 +40,12 @@ public class TestingApplication extends Engine {
 						-.5f,-0.5f,
 						0.5f, 0.5f,
 				},
-				null,
+				new float[] {
+						0f, 1f,
+						1f, 0f,
+						0f, 0f,
+						1f, 1f,
+				},
 				new float[]{
 						1f, 0f, 0f,
 						0f, 1f, 0f,
@@ -56,6 +59,7 @@ public class TestingApplication extends Engine {
 				false);
 		screenFramebuffer = new Framebuffer(getWindowWidth(), getWindowHeight());
 		audioSource = new AudioSource("stab-f-01-brvhrtz-224599.mp3", AudioSource.Format.MP3, .1f);
+		image = new ImageTexture("wall.jpg", false, true);
 	}
 
 	@Override
@@ -96,6 +100,7 @@ public class TestingApplication extends Engine {
 		{	Framebuffer.clear();
 			shader.use();
 			shader.setInt("uID", 1);
+			image.bind(0);
 			shader.setMatrix4("uProjView", camera.getProjectionViewMatrix());
 			shader.setMatrix4("uModel", new Matrix4f());
 			mesh.draw();
