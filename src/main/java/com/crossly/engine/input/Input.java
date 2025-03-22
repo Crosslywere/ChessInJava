@@ -85,10 +85,10 @@ public class Input {
 	public static final int KEY_RIGHT_BRACKET = GLFW_KEY_RIGHT_BRACKET;
 	public static final int KEY_BACKSLASH = GLFW_KEY_BACKSLASH;
 	public static final int KEY_ENTER = GLFW_KEY_ENTER;
-	public static final int KEY_LEFT = GLFW_KEY_LEFT;
-	public static final int KEY_UP = GLFW_KEY_UP;
-	public static final int KEY_RIGHT = GLFW_KEY_RIGHT;
-	public static final int KEY_DOWN = GLFW_KEY_DOWN;
+	public static final int KEY_LEFT_ARROW = GLFW_KEY_LEFT;
+	public static final int KEY_UP_ARROW = GLFW_KEY_UP;
+	public static final int KEY_RIGHT_ARROW = GLFW_KEY_RIGHT;
+	public static final int KEY_DOWN_ARROW = GLFW_KEY_DOWN;
 	public static final int KEY_HOME = GLFW_KEY_HOME;
 	public static final int KEY_END = GLFW_KEY_END;
 	public static final int KEY_INSERT = GLFW_KEY_INSERT;
