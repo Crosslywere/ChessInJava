@@ -11,7 +11,9 @@ public class Camera3D {
 	private final Vector3f right = new Vector3f(1f, 0f, 0f);
 
 	private float pitch = 0f;
+	private float pitchLast = 0f;
 	private float yaw = 0f;
+	private float yawLast = 0f;
 
 	private float aspect;
 	private float fovy = 60f;
@@ -102,8 +104,8 @@ public class Camera3D {
 	}
 
 	public void rotateBy(Vector2f rotation) {
-		pitch += rotation.x;
-		yaw += rotation.y;
+		pitch += rotation.y;
+		yaw += rotation.x;
 		updateRotation();
 		updateDirections();
 	}
@@ -133,7 +135,11 @@ public class Camera3D {
 	}
 
 	private void updateDirections() {
-		front.rotateX((float) Math.toRadians(pitch), front).rotateY((float) Math.toRadians(yaw), front);
+		float pitchDiff = pitch - pitchLast;
+		pitchLast = pitch;
+		float yawDiff = yaw - yawLast;
+		yawLast = yaw;
+		front.rotateX((float) Math.toRadians(pitchDiff), front).rotateY((float) Math.toRadians(yawDiff), front);
 		front.cross(WORLD_UP, right);
 	}
 }
