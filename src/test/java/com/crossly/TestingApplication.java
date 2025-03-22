@@ -6,19 +6,27 @@ import com.crossly.engine.graphics.*;
 import com.crossly.engine.input.Input;
 import com.crossly.engine.time.Timer;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
+import org.joml.Vector2i;
 
 public class TestingApplication extends Engine {
 
+	// Variables
 	private float time = 0f;
 	private int frames = 0;
 	final float INTERVAL = 0.5f;
+	private Vector2i mousePosLast = new Vector2i();
+
+	// OpenGL Dependent Graphics
 	private Shader shader;
 	private Mesh mesh;
 	private Framebuffer screenFramebuffer;
 	private ImageTexture image;
 
+	// Audio
 	private AudioSource audioSource;
 
+	// OpenGL Independent Graphics
 	private final Camera3D camera;
 
 	public TestingApplication() {
@@ -66,7 +74,7 @@ public class TestingApplication extends Engine {
 	public void onUpdate(Input input) {
 		time += Timer.getDeltaTime();
 		if (time >= INTERVAL) {
-			System.out.printf("FPS: %d, FrameTime: %.2fms\n", (int) (frames / INTERVAL), (time / frames) * 1_000);
+//			System.out.printf("FPS: %d, FrameTime: %.2fms\n", (int) (frames / INTERVAL), (time / frames) * 1_000);
 			time -= INTERVAL;
 			frames = 0;
 		}
@@ -82,6 +90,7 @@ public class TestingApplication extends Engine {
 			shader.setFloat("uDelta", audioSource.getElapsedTime());
 		} else {
 			shader.setFloat("uTime", 0f);
+			shader.setFloat("uDelta", 0f);
 		}
 
 		if (input.isKeyPressed(Input.KEY_ESCAPE))
@@ -91,6 +100,22 @@ public class TestingApplication extends Engine {
 		if (gain != 0) {
 			audioSource.setVolume(Math.clamp(audioSource.getVolume() + (gain * .05f), 0f, 1f));
 			System.out.println("Audio Volume - " + audioSource.getVolume());
+		}
+
+		if (input.isKeyPressed(Input.KEY_W))
+			camera.addPosition(camera.getFront().mul(Timer.getDeltaTime()));
+		if (input.isKeyPressed(Input.KEY_S))
+			camera.addPosition(camera.getFront().mul(-Timer.getDeltaTime()));
+		if (input.isKeyPressed(Input.KEY_A))
+			camera.addPosition(camera.getRight().mul(-Timer.getDeltaTime()));
+		if (input.isKeyPressed(Input.KEY_D))
+			camera.addPosition(camera.getRight().mul(Timer.getDeltaTime()));
+
+		Vector2i mousePosDiff = new Vector2i();
+		mousePos.sub(mousePosLast, mousePosDiff);
+		mousePosLast = mousePos;
+		if (input.isButtonPressed(Input.MOUSE_BUTTON_RIGHT)) {
+			camera.rotateBy(new Vector2f(mousePosDiff.x * -Timer.getDeltaTime() * 3f, mousePosDiff.y * Timer.getDeltaTime() * 3f));
 		}
 	}
 
@@ -122,6 +147,8 @@ public class TestingApplication extends Engine {
 	@Override
 	public void onResize() {
 		super.onResize();
+		screenFramebuffer.delete();
+		screenFramebuffer = new Framebuffer(getWindowWidth(), getWindowHeight());
 		camera.setAspect((float) getWindowWidth() / getWindowHeight());
 	}
 
