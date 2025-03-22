@@ -19,7 +19,7 @@ public class TestingApplication extends Engine {
 
 	// OpenGL Dependent Graphics
 	private Shader shader;
-	private Mesh mesh;
+	private Model chessPiece;
 	private Framebuffer screenFramebuffer;
 	private ImageTexture image;
 
@@ -41,40 +41,17 @@ public class TestingApplication extends Engine {
 	@Override
 	public void onCreate() {
 		shader = new Shader("test_simple.vert", "test_simple.frag");
-		mesh = new Mesh(
-				new float[]{
-						-.5f, 0.5f,
-						0.5f,-0.5f,
-						-.5f,-0.5f,
-						0.5f, 0.5f,
-				},
-				new float[] {
-						0f, 1f,
-						1f, 0f,
-						0f, 0f,
-						1f, 1f,
-				},
-				new float[]{
-						1f, 0f, 0f,
-						0f, 1f, 0f,
-						0f, 0f, 1f,
-						1f, 1f, 0f,
-				},
-				new int[]{
-						0, 1, 2,
-						0, 3, 1,
-				},
-				false);
 		screenFramebuffer = new Framebuffer(getWindowWidth(), getWindowHeight());
 		audioSource = new AudioSource("stab-f-01-brvhrtz-224599.mp3", AudioSource.Format.MP3, .1f);
 		image = new ImageTexture("wall.jpg", false, true);
+		chessPiece = new Model("ChessPiece/ChessPiece.obj");
 	}
 
 	@Override
 	public void onUpdate(Input input) {
 		time += Timer.getDeltaTime();
 		if (time >= INTERVAL) {
-//			System.out.printf("FPS: %d, FrameTime: %.2fms\n", (int) (frames / INTERVAL), (time / frames) * 1_000);
+			System.out.printf("FPS: %d, FrameTime: %.2fms\n", (int) (frames / INTERVAL), (time / frames) * 1_000);
 			time -= INTERVAL;
 			frames = 0;
 		}
@@ -127,8 +104,8 @@ public class TestingApplication extends Engine {
 			shader.setInt("uID", 1);
 			image.bind(0);
 			shader.setMatrix4("uProjView", camera.getProjectionViewMatrix());
-			shader.setMatrix4("uModel", new Matrix4f());
-			mesh.draw();
+			shader.setMatrix4("uModel", new Matrix4f().scale(1f / 16f));
+			chessPiece.draw(shader);
 		}
 		Framebuffer.unbind();
 		Framebuffer.renderToScreen(screenFramebuffer);
@@ -139,9 +116,9 @@ public class TestingApplication extends Engine {
 	public void onExit() {
 		super.onExit();
 		shader.delete();
-		mesh.delete();
 		screenFramebuffer.delete();
 		audioSource.delete();
+		chessPiece.delete();
 	}
 
 	@Override

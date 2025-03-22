@@ -11,6 +11,6 @@ void main() {
     oID = uID;
     float t = cos(uTime + uDelta) * 0.5 + 0.5;
     vec3 imgSample = vec3(texture2D(uTexture, iTexCoord));
-    vec3 oColor = clamp(iNormal + t, 0.0, 1.0) * imgSample;
+    vec3 oColor = clamp(abs(iNormal) + t, 0.0, 1.0) * imgSample;
     oColorAttachment = vec4(oColor, 1.0);
 }
