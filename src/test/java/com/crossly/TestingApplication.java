@@ -2,11 +2,13 @@ package com.crossly;
 
 import com.crossly.engine.Engine;
 import com.crossly.engine.audio.AudioSource;
+import com.crossly.engine.graphics.Camera3D;
 import com.crossly.engine.graphics.Framebuffer;
 import com.crossly.engine.graphics.Mesh;
 import com.crossly.engine.graphics.Shader;
 import com.crossly.engine.input.Input;
 import com.crossly.engine.time.Timer;
+import org.joml.Matrix4f;
 
 public class TestingApplication extends Engine {
 
@@ -19,12 +21,15 @@ public class TestingApplication extends Engine {
 
 	private AudioSource audioSource;
 
+	private final Camera3D camera;
+
 	public TestingApplication() {
 		super();
-		setWindowWidth(1200);
-		setWindowHeight(800);
+		setWindowWidth(1280);
+		setWindowHeight(720);
 		setWindowTitle("Test Application");
 		setWindowResizable(true);
+		camera = new Camera3D(0f, 0f, -1f, (float) getWindowWidth() / getWindowHeight());
 	}
 
 	@Override
@@ -32,22 +37,25 @@ public class TestingApplication extends Engine {
 		shader = new Shader("test_simple.vert", "test_simple.frag");
 		mesh = new Mesh(
 				new float[]{
-						0.0f, 0.5f,
+						-.5f, 0.5f,
 						0.5f,-0.5f,
-						-.5f,-0.5f
+						-.5f,-0.5f,
+						0.5f, 0.5f,
 				},
 				null,
 				new float[]{
 						1f, 0f, 0f,
 						0f, 1f, 0f,
 						0f, 0f, 1f,
+						1f, 1f, 0f,
 				},
 				new int[]{
-						0, 1, 2
+						0, 1, 2,
+						0, 3, 1,
 				},
 				false);
 		screenFramebuffer = new Framebuffer(getWindowWidth(), getWindowHeight());
-		audioSource = new AudioSource("stab-f-01-brvhrtz-224599.mp3", AudioSource.Format.MP3);
+		audioSource = new AudioSource("stab-f-01-brvhrtz-224599.mp3", AudioSource.Format.MP3, .1f);
 	}
 
 	@Override
@@ -88,6 +96,8 @@ public class TestingApplication extends Engine {
 		{	Framebuffer.clear();
 			shader.use();
 			shader.setInt("uID", 1);
+			shader.setMatrix4("uProjView", camera.getProjectionViewMatrix());
+			shader.setMatrix4("uModel", new Matrix4f());
 			mesh.draw();
 		}
 		Framebuffer.unbind();
@@ -107,6 +117,7 @@ public class TestingApplication extends Engine {
 	@Override
 	public void onResize() {
 		super.onResize();
+		camera.setAspect((float) getWindowWidth() / getWindowHeight());
 	}
 
 	public static void main(String[] args) {
