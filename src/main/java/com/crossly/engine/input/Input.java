@@ -105,6 +105,7 @@ public class Input {
 	private final Vector2i mousePos = new Vector2i();
 
 	private Vector2i scrollAmount = new Vector2i();
+	private long windowHandle;
 
 	private final Set<Integer> keysPressed = new HashSet<>();
 	private final Set<Integer> keysLast = new HashSet<>();
@@ -175,5 +176,17 @@ public class Input {
 		buttonsLast.addAll(buttonsPressed);
 		keysLast.clear();
 		keysLast.addAll(keysPressed);
+	}
+
+	public void setWindowHandle(long window) {
+		windowHandle = window;
+	}
+
+	public void disableMouse() {
+		glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	}
+
+	public void enableMouse() {
+		glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 	}
 }

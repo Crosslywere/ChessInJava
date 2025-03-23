@@ -92,8 +92,11 @@ public class TestingApplication extends Engine {
 		mousePos.sub(mousePosLast, mousePosDiff);
 		mousePosLast = mousePos;
 		if (input.isButtonPressed(Input.MOUSE_BUTTON_RIGHT)) {
+			input.disableMouse();
 			camera.rotateBy(new Vector2f(mousePosDiff.x * -Timer.getDeltaTime() * 3f, mousePosDiff.y * Timer.getDeltaTime() * 3f));
 		}
+		if (input.isButtonJustReleased(Input.MOUSE_BUTTON_RIGHT))
+			input.enableMouse();
 	}
 
 	@Override

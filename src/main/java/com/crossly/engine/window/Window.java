@@ -26,6 +26,7 @@ public class Window {
 		glfwMakeContextCurrent(window);
 		glfwSwapInterval(1);
 		GL.createCapabilities();
+		input.setWindowHandle(window);
 		glEnable(GL_DEPTH_TEST);
 		glfwSetKeyCallback(window, new GLFWKeyCallback() {
 			@Override
