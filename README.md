@@ -16,3 +16,7 @@ Currently, the only runnable class is the TestingApplication class located [here
 It simply renders a textured square which can be clicked on to play a sound.
 
 It also implements a fly camera ie `W`,`A`,`S`,`D` to move & hold the `Right Mouse Button` to rotate the camera.
+
+### Currently Focused On
+
+- Abstracting the framebuffer class so there can be different types of framebuffers eg. Picking / Id framebuffer
