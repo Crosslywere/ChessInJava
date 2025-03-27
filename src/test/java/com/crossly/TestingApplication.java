@@ -20,7 +20,7 @@ public class TestingApplication extends Engine {
 	// OpenGL Dependent Graphics
 	private Shader shader;
 	private Model chessPiece;
-	private Framebuffer screenFramebuffer;
+	private IdFramebuffer idFramebuffer;
 	private ImageTexture image;
 
 	// Audio
@@ -41,7 +41,7 @@ public class TestingApplication extends Engine {
 	@Override
 	public void onCreate() {
 		shader = new Shader("test_simple.vert", "test_simple.frag");
-		screenFramebuffer = new Framebuffer(getWindowWidth(), getWindowHeight());
+		idFramebuffer = new IdFramebuffer(getWindowWidth(), getWindowHeight());
 		audioSource = new AudioSource("stab-f-01-brvhrtz-224599.mp3", AudioSource.Format.MP3, .1f);
 		image = new ImageTexture("wall.jpg", false, true);
 		chessPiece = new Model("ChessPiece/ChessPiece.obj");
@@ -59,7 +59,7 @@ public class TestingApplication extends Engine {
 		var mousePos = input.getMousePos();
 		int x = mousePos.x(), y = getWindowHeight() - mousePos.y();
 		shader.use();
-		if (screenFramebuffer.getId(x, y) == 1) {
+		if (idFramebuffer.getId(x, y) == 1) {
 			shader.setFloat("uTime", Timer.getTotalTime());
 			if (input.isButtonJustPressed(Input.MOUSE_BUTTON_LEFT)) {
 				audioSource.play();
@@ -101,17 +101,18 @@ public class TestingApplication extends Engine {
 
 	@Override
 	public void onRender() {
-		Framebuffer.drawTo(screenFramebuffer);
-		{	Framebuffer.clear();
+		idFramebuffer.bind();
+		{   idFramebuffer.clear();
 			shader.use();
 			shader.setInt("uID", 1);
 			image.bind(0);
 			shader.setMatrix4("uProjView", camera.getProjectionViewMatrix());
-			shader.setMatrix4("uModel", new Matrix4f().scale(1f / 16f));
+			shader.setMatrix4("uModel", new Matrix4f());
 			chessPiece.draw(shader);
 		}
 		Framebuffer.unbind();
-		Framebuffer.renderToScreen(screenFramebuffer);
+		Framebuffer.clearScreen();
+		idFramebuffer.drawToScreen();
 		frames++;
 	}
 
@@ -119,7 +120,7 @@ public class TestingApplication extends Engine {
 	public void onExit() {
 		super.onExit();
 		shader.delete();
-		screenFramebuffer.delete();
+		idFramebuffer.delete();
 		audioSource.delete();
 		chessPiece.delete();
 	}
@@ -127,8 +128,8 @@ public class TestingApplication extends Engine {
 	@Override
 	public void onResize() {
 		super.onResize();
-		screenFramebuffer.delete();
-		screenFramebuffer = new Framebuffer(getWindowWidth(), getWindowHeight());
+		idFramebuffer.delete();
+		idFramebuffer = new IdFramebuffer(getWindowWidth(), getWindowHeight());
 		camera.setAspect((float) getWindowWidth() / getWindowHeight());
 	}
 
