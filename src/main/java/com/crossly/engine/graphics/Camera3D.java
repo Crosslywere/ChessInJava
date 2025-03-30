@@ -1,6 +1,7 @@
 package com.crossly.engine.graphics;
 
 import org.joml.Matrix4f;
+import org.joml.Quaternionf;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 
@@ -135,11 +136,11 @@ public class Camera3D {
 	}
 
 	private void updateDirections() {
-		float pitchDiff = pitch - pitchLast;
+		float pitchDiff = (float)Math.toRadians(pitch - pitchLast);
 		pitchLast = pitch;
-		float yawDiff = yaw - yawLast;
+		float yawDiff = (float) Math.toRadians(yaw - yawLast);
 		yawLast = yaw;
-		front.rotateX((float) Math.toRadians(pitchDiff), front).rotateY((float) Math.toRadians(yawDiff), front);
+		front.rotate(new Quaternionf().rotateXYZ(pitchDiff, yawDiff, 0f));
 		front.cross(WORLD_UP, right);
 	}
 }
