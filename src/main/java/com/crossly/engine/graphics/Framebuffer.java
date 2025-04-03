@@ -76,8 +76,9 @@ public abstract class Framebuffer {
 	}
 
 	protected final void checkStatus() {
+		bind();
 		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-			throw new RuntimeException("OldFramebuffer incomplete!");
+			throw new RuntimeException("Framebuffer incomplete!");
 	}
 
 	public void bind() {
