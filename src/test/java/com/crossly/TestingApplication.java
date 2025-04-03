@@ -29,6 +29,8 @@ public class TestingApplication extends Engine {
 	// OpenGL Independent Graphics
 	private final Camera3D camera;
 
+	private FontAtlas robotoFontAtlas;
+
 	public TestingApplication() {
 		super();
 		setWindowWidth(1280);
@@ -45,6 +47,8 @@ public class TestingApplication extends Engine {
 		audioSource = new AudioSource("stab-f-01-brvhrtz-224599.mp3", AudioSource.Format.MP3, .1f);
 		image = new ImageTexture("wall.jpg", false, true);
 		chessPiece = new Model("ChessPiece/ChessPiece.obj");
+		robotoFontAtlas = new FontAtlas("sui.ttf", 128f);
+		robotoFontAtlas.writeToImage("Test-FontAtlas.png");
 	}
 
 	@Override
@@ -123,6 +127,7 @@ public class TestingApplication extends Engine {
 		idFramebuffer.delete();
 		audioSource.delete();
 		chessPiece.delete();
+		robotoFontAtlas.delete();
 	}
 
 	@Override
