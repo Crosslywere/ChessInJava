@@ -8,13 +8,14 @@ import com.crossly.engine.time.Timer;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
+import org.joml.Vector3f;
 
 public class TestingApplication extends Engine {
 
 	// Variables
 	private float time = 0f;
 	private int frames = 0;
-	final float INTERVAL = 0.5f;
+	final float INTERVAL = 0.25f;
 	private Vector2i mousePosLast = new Vector2i();
 
 	// OpenGL Dependent Graphics
@@ -30,6 +31,9 @@ public class TestingApplication extends Engine {
 	private final Camera3D camera;
 
 	private FontAtlas suiFontAtlas;
+	private TextRenderer textRenderer;
+	private String textToPrint = "";
+	private Shader textShader;
 
 	public TestingApplication() {
 		super();
@@ -49,13 +53,15 @@ public class TestingApplication extends Engine {
 		chessPiece = new Model("ChessPiece/ChessPiece.obj");
 		suiFontAtlas = new FontAtlas("sui.ttf", 128f);
 		suiFontAtlas.writeToImage("Test-FontAtlas.png");
+		textShader = new Shader("text.vert", "text.frag");
+		textRenderer = new TextRenderer(suiFontAtlas, getWindowWidth(), getWindowHeight());
 	}
 
 	@Override
 	public void onUpdate(Input input) {
 		time += Timer.getDeltaTime();
 		if (time >= INTERVAL) {
-			System.out.printf("FPS: %d, FrameTime: %.2fms\n", (int) (frames / INTERVAL), (time / frames) * 1_000);
+			textToPrint = String.format("FPS: %d\nFrameTime: %.1fms", (int) (frames / INTERVAL), (time / frames) * 1_000);
 			time -= INTERVAL;
 			frames = 0;
 		}
@@ -117,6 +123,12 @@ public class TestingApplication extends Engine {
 		Framebuffer.unbind();
 		Framebuffer.clearScreen();
 		idFramebuffer.drawToScreen();
+		textShader.use();
+		textShader.setMatrix4("uOrtho", textRenderer.getViewMatrix());
+		suiFontAtlas.bind(0);
+		textShader.setInt("uTextTexture", 0);
+		textShader.setFloat3("uColor", new Vector3f(1f, 1f, 0f));
+		textRenderer.writeText(textToPrint, new Vector2f(8f, 32f), 32f, textShader);
 		frames++;
 	}
 
@@ -128,6 +140,7 @@ public class TestingApplication extends Engine {
 		audioSource.delete();
 		chessPiece.delete();
 		suiFontAtlas.delete();
+		textShader.delete();
 	}
 
 	@Override
@@ -136,6 +149,7 @@ public class TestingApplication extends Engine {
 		idFramebuffer.delete();
 		idFramebuffer = new IdFramebuffer(getWindowWidth(), getWindowHeight());
 		camera.setAspect((float) getWindowWidth() / getWindowHeight());
+		textRenderer.setViewMatrix(getWindowWidth(), getWindowHeight());
 	}
 
 	public static void main(String[] args) {
