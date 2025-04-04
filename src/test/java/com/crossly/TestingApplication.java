@@ -147,7 +147,8 @@ public class TestingApplication extends Engine {
 	public void onResize() {
 		super.onResize();
 		idFramebuffer.delete();
-		idFramebuffer = new IdFramebuffer(getWindowWidth(), getWindowHeight());
+		if (getWindowWidth() > 0 && getWindowHeight() > 0)
+			idFramebuffer = new IdFramebuffer(getWindowWidth(), getWindowHeight());
 		camera.setAspect((float) getWindowWidth() / getWindowHeight());
 		textRenderer.setViewMatrix(getWindowWidth(), getWindowHeight());
 	}
