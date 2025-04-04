@@ -30,8 +30,7 @@ public class TestingApplication extends Engine {
 	// OpenGL Independent Graphics
 	private final Camera3D camera;
 
-	private FontAtlas suiFontAtlas;
-	private TextRenderer textRenderer;
+	private TextWriter textWriter;
 	private String textToPrint = "";
 	private Shader textShader;
 
@@ -51,10 +50,8 @@ public class TestingApplication extends Engine {
 		audioSource = new AudioSource("stab-f-01-brvhrtz-224599.mp3", AudioSource.Format.MP3, .1f);
 		image = new ImageTexture("wall.jpg", false, true);
 		chessPiece = new Model("ChessPiece/ChessPiece.obj");
-		suiFontAtlas = new FontAtlas("sui.ttf", 128f);
-		suiFontAtlas.writeToImage("Test-FontAtlas.png");
 		textShader = new Shader("text.vert", "text.frag");
-		textRenderer = new TextRenderer(suiFontAtlas, getWindowWidth(), getWindowHeight());
+		textWriter = new TextWriter(new FontAtlas("sui.ttf", 128f), getWindowWidth(), getWindowHeight());
 	}
 
 	@Override
@@ -124,11 +121,11 @@ public class TestingApplication extends Engine {
 		Framebuffer.clearScreen();
 		idFramebuffer.drawToScreen();
 		textShader.use();
-		textShader.setMatrix4("uOrtho", textRenderer.getViewMatrix());
-		suiFontAtlas.bind(0);
+		textShader.setMatrix4("uOrtho", textWriter.getViewMatrix());
+		textWriter.getFontAtlas().bind(0);
 		textShader.setInt("uTextTexture", 0);
 		textShader.setFloat3("uColor", new Vector3f(1f, 1f, 0f));
-		textRenderer.writeText(textToPrint, new Vector2f(8f, 32f), 32f, textShader);
+		textWriter.writeText(textToPrint, new Vector2f(8f, 32f), 32f, textShader);
 		frames++;
 	}
 
@@ -139,7 +136,7 @@ public class TestingApplication extends Engine {
 		idFramebuffer.delete();
 		audioSource.delete();
 		chessPiece.delete();
-		suiFontAtlas.delete();
+		textWriter.getFontAtlas().delete();
 		textShader.delete();
 	}
 
@@ -150,7 +147,7 @@ public class TestingApplication extends Engine {
 		if (getWindowWidth() > 0 && getWindowHeight() > 0)
 			idFramebuffer = new IdFramebuffer(getWindowWidth(), getWindowHeight());
 		camera.setAspect((float) getWindowWidth() / getWindowHeight());
-		textRenderer.setViewMatrix(getWindowWidth(), getWindowHeight());
+		textWriter.setViewMatrix(getWindowWidth(), getWindowHeight());
 	}
 
 	public static void main(String[] args) {

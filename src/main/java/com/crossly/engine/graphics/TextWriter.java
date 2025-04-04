@@ -6,7 +6,7 @@ import org.joml.Vector3f;
 
 import static org.lwjgl.opengl.GL33.*;
 
-public class TextRenderer {
+public class TextWriter {
 
 	private final FontAtlas fontAtlas;
 	private Matrix4f viewMatrix;
@@ -61,9 +61,17 @@ public class TextRenderer {
 		);
 	}
 
-	public TextRenderer(FontAtlas fontAtlas, int viewWidth, int viewHeight) {
+	public TextWriter(FontAtlas fontAtlas, int viewWidth, int viewHeight) {
 		this.fontAtlas = fontAtlas;
 		setViewMatrix(viewWidth, viewHeight);
+	}
+
+	public TextWriter(FontAtlas fontAtlas) {
+		this(fontAtlas, 1, 1);
+	}
+
+	public FontAtlas getFontAtlas() {
+		return fontAtlas;
 	}
 
 	public float getLineHeight() {
