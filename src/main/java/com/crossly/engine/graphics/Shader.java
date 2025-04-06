@@ -61,12 +61,20 @@ public class Shader {
 		glUniform1f(getUniformLocation(name), value);
 	}
 
+	public void setFloat2(String name, float x, float y) {
+		glUniform2f(getUniformLocation(name), x, y);
+	}
+
 	public void setFloat2(String name, Vector2f value) {
-		glUniform2f(getUniformLocation(name), value.x, value.y);
+		setFloat2(name, value.x, value.y);
+	}
+
+	public void setFloat3(String name, float x, float y, float z) {
+		glUniform3f(getUniformLocation(name), x, y, z);
 	}
 
 	public void setFloat3(String name, Vector3f value) {
-		glUniform3f(getUniformLocation(name), value.x, value.y, value.z);
+		setFloat3(name, value.x, value.y, value.z);
 	}
 
 	public void setMatrix4(String name, Matrix4f value) {
