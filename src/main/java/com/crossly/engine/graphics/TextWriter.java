@@ -52,9 +52,10 @@ public class TextWriter {
 						#version 330 core
 						layout (location = 0) out vec4 oColor;
 						in vec2 texCoord;
+						uniform vec3 color;
 						uniform sampler2D fontTexture;
 						void main() {
-							oColor = vec4(vec3(1.0), texture2D(fontTexture, texCoord).r);
+							oColor = vec4(color, texture2D(fontTexture, texCoord).r);
 						}
 						""",
 				false
@@ -90,16 +91,21 @@ public class TextWriter {
 		this.viewMatrix = new Matrix4f().ortho(0f, viewWidth, viewHeight, 0f, 0f, 1f);
 	}
 
-	public void writeText(String text, Vector2f position, float size) {
+	public Vector2f writeText(String text, Vector2f position, float size, Vector3f color) {
 		FONT_SHADER.use();
 		FONT_SHADER.setMatrix4("projection", viewMatrix);
-		FONT_SHADER.setFloat3("color", new Vector3f(1f));
+		FONT_SHADER.setFloat3("color", color);
 		fontAtlas.bind(1);
 		FONT_SHADER.setInt("fontTexture", 1);
 		Vector2f origin = new Vector2f(position);
 		for (var ch : text.toCharArray()) {
 			position = writeCharacter(ch, position, origin, size);
 		}
+		return position;
+	}
+
+	public Vector2f writeText(String text, Vector2f position, float size) {
+		return writeText(text, position, size, new Vector3f(1f));
 	}
 
 	public Vector2f writeText(String text, Vector2f position, float size, Shader fontShader) {
