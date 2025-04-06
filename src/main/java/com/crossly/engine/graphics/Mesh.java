@@ -8,6 +8,27 @@ import static org.lwjgl.opengl.GL33.*;
 
 public class Mesh {
 
+	public static final Mesh UNIT_2D_MESH = new Mesh(
+			new float[] {
+					-1f,  1f,
+					-1f, -1f,
+					 1f, -1f,
+					 1f,  1f,
+			},
+			new float[] {
+					0f, 1f,
+					0f, 0f,
+					1f, 0f,
+					1f, 1f,
+			},
+			null,
+			new int[] {
+					0, 1, 2,
+					2, 3, 0,
+			},
+			false
+	);
+
 	private final int vertexArrayId;
 	private final ArrayList<Integer> buffers = new ArrayList<>();
 	private final int count;

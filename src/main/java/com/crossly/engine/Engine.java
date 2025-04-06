@@ -1,6 +1,7 @@
 package com.crossly.engine;
 
 import com.crossly.engine.audio.AudioManager;
+import com.crossly.engine.graphics.Mesh;
 import com.crossly.engine.input.Input;
 import com.crossly.engine.time.Timer;
 import com.crossly.engine.window.Window;
@@ -48,6 +49,7 @@ public abstract class Engine {
 			Timer.update();
 		}
 		onExit();
+		Mesh.UNIT_2D_MESH.delete();
 		audioManager.cleanup();
 		window.cleanup();
 	}
