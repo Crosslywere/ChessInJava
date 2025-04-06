@@ -1,13 +1,10 @@
 package com.crossly.chess;
 
 import com.crossly.engine.Engine;
-import com.crossly.engine.graphics.Camera3D;
-import com.crossly.engine.graphics.Framebuffer;
-import com.crossly.engine.graphics.IdFramebuffer;
-import com.crossly.engine.graphics.Shader;
+import com.crossly.engine.graphics.*;
 import com.crossly.engine.input.Input;
+import com.crossly.engine.time.Timer;
 import org.joml.Vector2f;
-import org.joml.Vector2i;
 import org.joml.Vector3f;
 
 import java.util.ArrayList;
@@ -19,10 +16,17 @@ public class Chess extends Engine {
 	private IdFramebuffer framebuffer;
 	private int selectedIndex = -1;
 	private Shader basicShader;
+	private TextWriter playFairDisplay;
+	private TextWriter spaceMono;
+	private boolean overlay = true;
+	private float overlayTimer = 0f;
+	private Vector2f startTextPos = new Vector2f(8f, 96f);
+	private final static float HEADER = 128f;
+	private final static float NORMAL = 64f;
 
 	public Chess() {
 		super();
-		setWindowResizable(false);
+		setWindowResizable(true);
 		setWindowWidth(1280);
 		setWindowHeight(720);
 	}
@@ -35,6 +39,10 @@ public class Chess extends Engine {
 			chessPieces.add(new ChessPiece(i, ChessPiece.PAWN, new Vector2f(i - 3f, 0f), new Vector3f(1f, 0f, 0f)));
 		}
 		camera.setPitch(15f);
+		playFairDisplay = new TextWriter(new FontAtlas("fonts/PlayfairDisplay.ttf", 128f), getWindowWidth(), getWindowHeight());
+		playFairDisplay.setLineHeight(.25f);
+		spaceMono = new TextWriter(new FontAtlas("fonts/SpaceMono.ttf", 128f), getWindowWidth(), getWindowHeight());
+		spaceMono.setLineHeight(.75f);
 	}
 
 	@Override
@@ -47,11 +55,24 @@ public class Chess extends Engine {
 			// Color selected piece
 			if (selectedIndex > -1 && selectedIndex < chessPieces.size()) {
 				chessPieces.get(selectedIndex).setColor(new Vector3f(1f));
+				overlay = false;
 			}
 			// Revert to original piece color
 			if (prevSelectedIndex != selectedIndex && prevSelectedIndex > -1 && prevSelectedIndex < chessPieces.size()) {
 				chessPieces.get(prevSelectedIndex).setColor(new Vector3f(1f, 0f, 0f));
 			}
+		}
+		if (input.isKeyJustPressed(Input.KEY_SPACE)) {
+			overlay = !overlay;
+			if (overlay) {
+				startTextPos = new Vector2f(8f, 96f);
+				overlayTimer = 0f;
+			}
+		}
+		if (overlay && overlayTimer > 10f) {
+			startTextPos.y -= Timer.getDeltaTime() * 100;
+		} else if (overlay) {
+			overlayTimer += Timer.getDeltaTime();
 		}
 	}
 
@@ -64,6 +85,19 @@ public class Chess extends Engine {
 			basicShader.setMatrix4("u_ProjView", camera.getProjectionViewMatrix());
 			basicShader.setFloat3("u_LightDir", new Vector3f(1f).normalize());
 			chessPieces.forEach(cp -> cp.draw(basicShader));
+			if (overlay) {
+				playFairDisplay.setLineHeight(.25f);
+				var endPos = playFairDisplay.writeText("A 3D Chess Game\n", new Vector2f(startTextPos), HEADER, new Vector3f(0f, .5f, 1f));
+				playFairDisplay.setLineHeight(.75f);
+				endPos = playFairDisplay.writeText("By Crosslywere!\n", new Vector2f(8f, endPos.y()), NORMAL, new Vector3f(1f, 1f, 0f));
+				endPos = playFairDisplay.writeText("Click on a piece to select it!\nPress ", new Vector2f(8f, endPos.y()), 64f);
+				endPos = spaceMono.writeText("[Esc]", endPos, NORMAL);
+				endPos = playFairDisplay.writeText(" to exit!\n", endPos, NORMAL);
+				endPos = playFairDisplay.writeText("Press ", new Vector2f(8f, endPos.y()), NORMAL);
+				endPos = spaceMono.writeText("[Space Bar]", endPos, NORMAL);
+				endPos = playFairDisplay.writeText(" to toggle this overlay!", endPos, NORMAL);
+				if (endPos.y() < 0) startTextPos = new Vector2f(8f, getWindowHeight() + HEADER);
+			}
 		}
 		Framebuffer.unbind();
 		Framebuffer.clearScreen();
@@ -71,7 +105,23 @@ public class Chess extends Engine {
 	}
 
 	@Override
+	public void onResize() {
+		if (getWindowWidth() > 0 && getWindowHeight() > 0) {
+			framebuffer.delete();
+			camera.setAspect((float) getWindowWidth() / getWindowHeight());
+			framebuffer = new IdFramebuffer(getWindowWidth(), getWindowHeight());
+			playFairDisplay.setViewMatrix(getWindowWidth(), getWindowHeight());
+			spaceMono.setViewMatrix(getWindowWidth(), getWindowHeight());
+		}
+	}
+
+	@Override
 	public void onExit() {
+		ChessPiece.PAWN.delete();
+		playFairDisplay.getFontAtlas().delete();
+		spaceMono.getFontAtlas().delete();
+		framebuffer.delete();
+		basicShader.delete();
 	}
 
 	public static void main(String[] args) {
