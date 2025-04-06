@@ -1,5 +1,7 @@
 package com.crossly.engine.graphics;
 
+import org.joml.Vector4f;
+
 import static org.lwjgl.opengl.GL33.*;
 
 public abstract class Framebuffer {
@@ -9,30 +11,10 @@ public abstract class Framebuffer {
 	private final int width;
 	private final int height;
 
-	private static final Mesh SCREEN_MESH;
+	private static Vector4f clearColor = new Vector4f(0, 0, 0, 1);
 	private static final Shader SCREEN_SHADER;
 
 	static {
-		SCREEN_MESH = new Mesh(
-				new float[] {
-						-1f,  1f,
-						-1f, -1f,
-						 1f, -1f,
-						 1f,  1f
-				},
-				new float[] {
-						0f, 1f,
-						0f, 0f,
-						1f, 0f,
-						1f, 1f,
-				},
-				null,
-				new int[] {
-						0, 1, 2,
-						2, 3, 0,
-				},
-				false
-		);
 		SCREEN_SHADER = new Shader(
 				"""
 						#version 330 core
@@ -100,15 +82,25 @@ public abstract class Framebuffer {
 		clearData();
 	}
 
+	public static Vector4f getClearColor() {
+		return clearColor;
+	}
+
+	public static void setClearColor(Vector4f clearColor) {
+		Framebuffer.clearColor = clearColor;
+		glClearColor(clearColor.x(), clearColor.y(), clearColor.z(), clearColor.w());
+	}
+
 	public static void setClearColor(float r, float g, float b) {
-		glClearColor(r, g, b, 1f);
+		clearColor = new Vector4f(r, g, b, 1);
+		glClearColor(r, g, b, 1);
 	}
 
 	public void drawToScreen() {
 		SCREEN_SHADER.use();
 		SCREEN_SHADER.setInt("u_Texture", 0);
 		bindTexture(0);
-		SCREEN_MESH.draw();
+		Mesh.UNIT_2D_MESH.draw();
 	}
 
 	public void delete() {
