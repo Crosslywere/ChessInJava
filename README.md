@@ -13,6 +13,11 @@ Attempting to create a 3D engine with chess as the example game
 
 - [Site](https://dev.to/shreyaspranav/how-to-render-truetype-fonts-in-opengl-using-stbtruetypeh-1p5k) & [GitHub Repository](https://github.com/shreyaspranav/stb-truetype-example)
 
+### Fonts
+
+- [SpaceMono.ttf](https://fonts.google.com)
+- [PlayfairDisplay.ttf](https://font.google.com)
+
 # How to use
 
 You can run the TestingApplication class located [here](src/test/java/com/crossly/TestingApplication.java)
