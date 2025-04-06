@@ -116,16 +116,17 @@ public class TestingApplication extends Engine {
 			shader.setMatrix4("uProjView", camera.getProjectionViewMatrix());
 			shader.setMatrix4("uModel", new Matrix4f());
 			chessPiece.draw(shader);
+			textShader.use();
+			textShader.setMatrix4("uOrtho", textWriter.getViewMatrix());
+			textWriter.getFontAtlas().bind(0);
+			textShader.setInt("uTextTexture", 0);
+			textShader.setFloat3("uColor", new Vector3f(1f, 1f, 0f));
+			textShader.setInt("uID", 2);
+			textWriter.writeText(textToPrint, new Vector2f(8f, 32f), 32f, textShader);
 		}
 		Framebuffer.unbind();
 		Framebuffer.clearScreen();
 		idFramebuffer.drawToScreen();
-		textShader.use();
-		textShader.setMatrix4("uOrtho", textWriter.getViewMatrix());
-		textWriter.getFontAtlas().bind(0);
-		textShader.setInt("uTextTexture", 0);
-		textShader.setFloat3("uColor", new Vector3f(1f, 1f, 0f));
-		textWriter.writeText(textToPrint, new Vector2f(8f, 32f), 32f, textShader);
 		frames++;
 	}
 
