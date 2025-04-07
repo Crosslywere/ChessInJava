@@ -12,14 +12,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import static org.lwjgl.opengl.GL33.*;
-import static org.lwjgl.stb.STBImageWrite.stbi_write_png;
 import static org.lwjgl.stb.STBTruetype.*;
 
 public class FontAtlas extends Texture {
 
 	private final STBTTPackedchar.Buffer packedChars;
 	private final STBTTAlignedQuad.Buffer alignedQuads;
-	private final ByteBuffer imageData;
 	private final float importSize;
 	private final static int CHARS_TO_INCLUDE = 128 - 32;
 
@@ -36,7 +34,7 @@ public class FontAtlas extends Texture {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
-		imageData = MemoryUtil.memAlloc(width * height);
+		ByteBuffer imageData = MemoryUtil.memAlloc(width * height);
 		try (STBTTPackContext ctx = STBTTPackContext.create()) {
 			stbtt_PackBegin(ctx, imageData, width, height, 0, 2);
 			packedChars = STBTTPackedchar.malloc(CHARS_TO_INCLUDE);
@@ -65,10 +63,6 @@ public class FontAtlas extends Texture {
 
 	public float getImportSize() {
 		return importSize;
-	}
-
-	public void writeToImage(String path) {
-		stbi_write_png(path, width, height, 1, imageData, width);
 	}
 
 	public STBTTAlignedQuad getAlignedQuad(int i) {
