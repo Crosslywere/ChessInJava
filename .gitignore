@@ -39,3 +39,4 @@ build/
 
 ### Custom Files and Folders ###
 **Test-*.*
+hs_err_pid*.log
