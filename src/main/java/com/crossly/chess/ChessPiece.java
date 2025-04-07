@@ -47,6 +47,10 @@ public class ChessPiece {
 		this.position = position;
 	}
 
+	public Vector3f getColor() {
+		return new Vector3f(color);
+	}
+
 	public void setColor(Vector3f color) {
 		this.color = color;
 	}
