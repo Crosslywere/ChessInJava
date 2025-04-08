@@ -48,8 +48,8 @@ public abstract class Engine {
 			input.update();
 			Timer.update();
 		}
-		onExit();
 		Mesh.UNIT_2D_MESH.delete();
+		onExit();
 		audioManager.cleanup();
 		window.cleanup();
 	}
