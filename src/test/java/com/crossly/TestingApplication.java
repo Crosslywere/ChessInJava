@@ -1,6 +1,5 @@
 package com.crossly;
 
-import com.crossly.chess.ChessBoard;
 import com.crossly.engine.Engine;
 import com.crossly.engine.audio.AudioSource;
 import com.crossly.engine.graphics.*;
@@ -10,8 +9,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
-
-import java.util.ArrayList;
 
 public class TestingApplication extends Engine {
 
