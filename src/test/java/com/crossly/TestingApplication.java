@@ -37,8 +37,6 @@ public class TestingApplication extends Engine {
 	private String textToPrint = "";
 	private Shader textShader;
 
-	private ChessBoard board;
-
 	public TestingApplication() {
 		super();
 		setWindowWidth(1280);
@@ -57,8 +55,6 @@ public class TestingApplication extends Engine {
 		chessPiece = new Model("ChessPiece/ChessPiece.obj");
 		textShader = new Shader("text.vert", "text.frag");
 		textWriter = new TextWriter(new FontAtlas("sui.ttf", 128f), getWindowWidth(), getWindowHeight());
-
-		board = new ChessBoard(new ArrayList<>());
 	}
 
 	@Override
@@ -117,7 +113,6 @@ public class TestingApplication extends Engine {
 	public void onRender() {
 		idFramebuffer.bind();
 		{   idFramebuffer.clear();
-			board.drawBoard(camera.getProjectionViewMatrix(), new Vector3f());
 			shader.use();
 			shader.setInt("uID", 1);
 			image.bind(0);
