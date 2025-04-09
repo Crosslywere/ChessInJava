@@ -24,7 +24,11 @@ public class IdFramebuffer extends Framebuffer {
 
 	public void clearData() {
 		glBindFramebuffer(GL_FRAMEBUFFER, framebufferId);
-		glClearBufferiv(GL_COLOR, 1, new int[]{-1});
+		clearData(-1);
+	}
+
+	public void clearData(int value) {
+		glClearBufferiv(GL_COLOR, 1, new int[]{value});
 	}
 
 	public void delete() {
