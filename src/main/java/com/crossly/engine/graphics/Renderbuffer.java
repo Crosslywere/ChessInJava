@@ -12,6 +12,10 @@ public class Renderbuffer {
 		glRenderbufferStorage(GL_RENDERBUFFER, internalFormat, width, height);
 	}
 
+	public int getRenderbufferId() {
+		return renderbufferId;
+	}
+
 	public void delete() {
 		glDeleteRenderbuffers(renderbufferId);
 	}

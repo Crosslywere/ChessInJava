@@ -149,9 +149,7 @@ public class TextWriter {
 			return new Vector2f(position.x() + packedChar.xadvance() * (size / fontAtlas.getImportSize()), position.y());
 		}
 		else if (character == '\n') {
-			float yoffset = (fontAtlas.getImportSize() * 2f * size) / fontAtlas.getImportSize();
-			float p = size * 2f / fontAtlas.getImportSize();
-			origin.y += lineHeight * (p * yoffset);
+			origin.y += lineHeight * size;
 			return origin;
 		}
 		return position;
