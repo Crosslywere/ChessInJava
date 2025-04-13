@@ -3,6 +3,7 @@ package com.crossly.engine.graphics;
 import org.joml.Matrix4f;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 import org.lwjgl.opengl.GL33;
 
 import java.io.IOException;
@@ -75,6 +76,10 @@ public class Shader {
 
 	public void setFloat3(String name, Vector3f value) {
 		setFloat3(name, value.x, value.y, value.z);
+	}
+
+	public void setFloat4(String name, Vector4f value) {
+		glUniform4f(getUniformLocation(name), value.x, value.y, value.z, value.w);
 	}
 
 	public void setMatrix4(String name, Matrix4f value) {
