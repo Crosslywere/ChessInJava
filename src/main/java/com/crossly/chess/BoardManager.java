@@ -4,6 +4,7 @@ import com.crossly.engine.graphics.Camera3D;
 import com.crossly.engine.graphics.Framebuffer;
 import com.crossly.engine.graphics.Mesh;
 import com.crossly.engine.graphics.Shader;
+import com.crossly.engine.time.Timer;
 import org.joml.*;
 
 import java.lang.Math;
@@ -81,6 +82,15 @@ public class BoardManager {
 	private BoardFramebuffer framebuffer;
 	private final ArrayList<ChessPiece> pieces = new ArrayList<>(32);
 	private final Camera3D camera;
+	private ChessPiece selectedPiece = null;
+	private boolean selected = false;
+	private ChessPiece.Color turn = ChessPiece.Color.WHITE;
+	private final Map<Integer, MoveAction> moveActions = new HashMap<>(28);
+	private final Vector2f outPositionWhite = new Vector2f(0, 1);
+	private final Vector2f outPositionBlack = new Vector2f(9, 8);
+	private boolean switchingSides = false;
+	private float timer = 0;
+	private boolean drawDebug = false;
 
 	public BoardManager(int width, int height) {
 		framebuffer = new BoardFramebuffer(width, height);
@@ -125,7 +135,10 @@ public class BoardManager {
 			for (int y = 1; y <= 8; y++) {
 				for (int x = 1; x <= 8; x++) {
 					BOARD_FLAT_SHADER.setMatrix4("uModel", new Matrix4f().translate(x, 0, y));
-					BOARD_FLAT_SHADER.setFloat4("uColor", (x + y) % 2 == 1 ? BOARD_LIGHT : BOARD_DARK);
+					if (moveActions.containsKey(BoardFramebuffer.Data.generateBoardPosId(x, y)) && selectedPiece != null && drawDebug)
+						BOARD_FLAT_SHADER.setFloat4("uColor", selectedPiece.getColor() == ChessPiece.Color.WHITE ? new Vector4f(0, .3f, .6f, 1) : new Vector4f(.8f, .2f, .1f, 1));
+					else
+						BOARD_FLAT_SHADER.setFloat4("uColor", (x + y) % 2 == 1 ? BOARD_LIGHT : BOARD_DARK);
 					BOARD_FLAT_SHADER.setInt("uBoardId", BoardFramebuffer.Data.generateBoardPosId(x, y));
 					Mesh.UNIT_2D_MESH.draw();
 				}
@@ -147,32 +160,57 @@ public class BoardManager {
 		framebuffer.drawToScreen();
 	}
 
-	// Picking here means that the selection
-	// - generates moves
-	// - picks pieces
-	// - takes piece action if a piece is selected
+	public boolean isSwitchingSides() {
+		return switchingSides;
+	}
 
-	private ChessPiece selectedPiece = null;
-	private boolean selected = false;
-	private ChessPiece.Color turn = ChessPiece.Color.WHITE;
-	private Map<Integer, MoveAction> moveActions = new HashMap<>(21);
+	public boolean isDrawDebug() {
+		return drawDebug;
+	}
 
-	// 1. move
-	// 2. take
-	// 3. select
+	public void setDrawDebug(boolean drawDebug) {
+		this.drawDebug = drawDebug;
+	}
+
+	public void rotateToSide() {
+		timer += Timer.getDeltaTime();
+		if (timer > .5f) {
+			if (turn == ChessPiece.Color.WHITE) {
+				camera.setPosition(camera.getPosition().lerp(new Vector3f(4.5f, 8, -4), timer - .5f));
+				camera.setYaw(180 + (timer - .5f) * 180);
+			} else {
+				camera.setPosition(camera.getPosition().lerp(new Vector3f(4.5f, 8, 13), timer - .5f));
+				camera.setYaw((timer - .5f) * 180);
+			}
+			if (timer - .5f >= 1) {
+				switchingSides = false;
+				timer = 0;
+				camera.setPosition(turn == ChessPiece.Color.WHITE ? new Vector3f(4.5f, 8, -4) : new Vector3f(4.5f, 8, 13));
+				camera.setYaw(turn == ChessPiece.Color.WHITE ? 0 : 180);
+			}
+		}
+	}
+
 	public void pick(Vector2i screenPos) {
 		var data = framebuffer.getIds(screenPos.x(), screenPos.y());
 		if (selected && data.pieceId() >= 0) {
 			var piece = pieces.stream().filter(p -> p.getPieceId() == data.pieceId() && p.isInPlay()).findFirst().orElse(null);
 			if (piece == null) {
 				selectedPiece = null;
+			} else {
+				int boardId = BoardFramebuffer.Data.generateBoardPosId(piece.getPosition());
+				if (moveActions.containsKey(boardId))
+					moveActions.get(boardId).fn();
 			}
-
 			// Take or deselect
 		} else if (selected && data.boardPosId() >= 0) {
 			// Move or deselect
+			if (moveActions.containsKey(data.boardPosId()))
+				moveActions.get(data.boardPosId()).fn();
+			else
+				selectedPiece = null;
 		} else {
-			selectedPiece = pieces.stream().filter(piece -> piece.getPieceId() == data.pieceId() && piece.getColor() == turn && piece.isInPlay()).findFirst().orElse(selectedPiece);
+			selectedPiece = pieces.stream().filter(piece -> piece.getPieceId() == data.pieceId() && piece.getColor() == turn && piece.isInPlay()).findFirst().orElse(null);
 			if (selectedPiece == null) {
 				selectedPiece = pieces.stream().filter(piece -> {
 					int x = (int) piece.getPosition().x();
@@ -187,26 +225,726 @@ public class BoardManager {
 	}
 
 	private ChessPiece getPieceAtPosition(int x, int y) {
-		return null;
+		return pieces.stream().filter(piece -> {
+			int ppx = (int) piece.getPosition().x();
+			int ppy = (int) piece.getPosition().y();
+			return ppx == x && ppy == y && piece.isInPlay();
+		}).findFirst().orElse(null);
 	}
 
-	private ChessPiece getPieceAtBoardId(int boardId) {
-		return null;
+	private void swapSides(ChessPiece.Color color) {
+		selectedPiece = null;
+		turn = color == ChessPiece.Color.WHITE ? ChessPiece.Color.BLACK : ChessPiece.Color.WHITE;
+		switchingSides = true;
+	}
+
+	private Vector2f getOutPosition(ChessPiece.Color color) {
+		Vector2f position;
+		if (color == ChessPiece.Color.WHITE) {
+			position = new Vector2f(outPositionWhite);
+			outPositionWhite.y += 1;
+			if (outPositionWhite.y() > 8) {
+				outPositionWhite.y = 1;
+				outPositionWhite.x -= 1;
+			}
+		} else {
+			position = new Vector2f(outPositionBlack);
+			outPositionBlack.y -= 1;
+			if (outPositionBlack.y() <= 0) {
+				outPositionBlack.y = 8;
+				outPositionBlack.x += 1;
+			}
+		}
+		return position;
 	}
 
 	private void generateMoves(ChessPiece piece) {
 		moveActions.clear();
 		int dir = piece.getColor() == ChessPiece.Color.WHITE ? 1 : -1;
+		int ppx = (int) piece.getPosition().x();
+		int ppy = (int) piece.getPosition().y();
 		switch (piece.getType()) {
 			case PAWN -> {
-				int x = (int) piece.getPosition().x();
-				if (getPieceAtPosition(x, (int) piece.getPosition().y() + dir) == null) {
-					moveActions.put(BoardFramebuffer.Data.generateBoardPosId(x, (int) piece.getPosition().y() + dir), () -> {
-						piece.moveTo(new Vector2f(x, piece.getPosition().y() + dir));
-						turn = piece.getColor() == ChessPiece.Color.WHITE ? ChessPiece.Color.BLACK : ChessPiece.Color.WHITE;
+				if (getPieceAtPosition(ppx, ppy + dir) == null) {
+					moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, ppy + dir), () -> {
+						piece.moveTo(new Vector2f(ppx, ppy + dir));
+						swapSides(piece.getColor());
 					});
+					if (!piece.isMoved() && getPieceAtPosition(ppx, ppy + dir * 2) == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, ppy + dir * 2), () -> {
+							piece.moveTo(new Vector2f(ppx, piece.getPosition().y() + dir * 2));
+							swapSides(piece.getColor());
+						});
+					}
+				}
+				if (ppx + 1 <= 8) {
+					var enemy = getPieceAtPosition(ppx + 1, (int) piece.getPosition().y() + dir);
+					if (enemy != null && enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx + 1, ppy + dir), () -> {
+							piece.moveTo(new Vector2f(ppx + 1, ppy + dir));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				}
+				if (ppx - 1 > 0) {
+					var enemy = getPieceAtPosition(ppx - 1, (int) piece.getPosition().y() + dir);
+					if (enemy != null && enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx - 1, ppy + dir), () -> {
+							piece.moveTo(new Vector2f(ppx - 1, ppy + dir));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				}
+			}
+			case ROOK -> {
+				// To the right
+				for (int x = 1; x <= 7; x++) {
+					int offX = ppx + x;
+					if (offX > 8) break;
+					var enemy = getPieceAtPosition(offX, ppy);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							piece.moveTo(new Vector2f(offX, ppy));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							piece.moveTo(new Vector2f(offX, ppy));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+						break;
+					} else {
+						break;
+					}
+				}
+				// To the left
+				for (int x = 1; x <= 7; x++) {
+					int offX = ppx - x;
+					if (offX <= 0) break;
+					var enemy = getPieceAtPosition(offX, ppy);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							piece.moveTo(new Vector2f(offX, ppy));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()){
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							piece.moveTo(new Vector2f(offX, ppy));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+						break;
+					} else {
+						break;
+					}
+				}
+				// To the top
+				for (int y = 1; y <= 7; y++) {
+					int offY = ppy + y;
+					if (offY > 8) break;
+					var enemy = getPieceAtPosition(ppx, offY);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							piece.moveTo(new Vector2f(ppx, offY));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							piece.moveTo(new Vector2f(ppx, offY));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+						break;
+					} else {
+						break;
+					}
+				}
+				// To the bottom
+				for (int y = 1; y <= 7; y++) {
+					int offY = ppy - y;
+					if (offY <= 0) break;
+					var enemy = getPieceAtPosition(ppx, offY);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							piece.moveTo(new Vector2f(ppx, offY));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							piece.moveTo(new Vector2f(ppx, offY));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+						break;
+					} else {
+						break;
+					}
+				}
+			}
+			case KNIGHT -> {
+				int offX, offY;
+				if ((offX = ppx + 2) <= 8 && (offY = ppy + 1) <= 8) {
+					int x = offX, y = offY;
+					var enemy = getPieceAtPosition(offX, offY);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(x, y));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(x, y));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				}
+				if ((offX = ppx + 2) <= 8 && (offY = ppy - 1) > 0) {
+					int x = offX, y = offY;
+					var enemy = getPieceAtPosition(offX, offY);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(x, y));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(x, y));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				}
+				if ((offX = ppx - 2) > 0 && (offY = ppy + 1) <= 8) {
+					int x = offX, y = offY;
+					var enemy = getPieceAtPosition(offX, offY);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(x, y));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(x, y));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				}
+				if ((offX = ppx - 2) > 0 && (offY = ppy - 1) > 0) {
+					int x = offX, y = offY;
+					var enemy = getPieceAtPosition(offX, offY);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(x, y));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(x, y));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				}
+				if ((offX = ppx + 1) <= 8 && (offY = ppy + 2) <= 8) {
+					int x = offX, y = offY;
+					var enemy = getPieceAtPosition(offX, offY);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(x, y));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(x, y));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				}
+				if ((offX = ppx + 1) <= 8 && (offY = ppy - 2) > 0) {
+					int x = offX, y = offY;
+					var enemy = getPieceAtPosition(offX, offY);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(x, y));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(x, y));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				}
+				if ((offX = ppx - 1) > 0 && (offY = ppy + 2) <= 8) {
+					int x = offX, y = offY;
+					var enemy = getPieceAtPosition(offX, offY);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(x, y));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(x, y));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				}
+				if ((offX = ppx - 1) > 0 && (offY = ppy - 2) > 0) {
+					int x = offX, y = offY;
+					var enemy = getPieceAtPosition(offX, offY);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(x, y));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(x, y));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				}
+			}
+			case BISHOP -> {
+				// Up, Right
+				for (int offDir = 1; offDir <= 7; offDir++) {
+					int offX, offY;
+					if ((offX = ppx + offDir) <= 8 && (offY = ppy + offDir) <= 8) {
+						var enemy = getPieceAtPosition(offX, offY);
+						if (enemy == null) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								piece.moveTo(new Vector2f(offX, offY));
+								swapSides(piece.getColor());
+							});
+						} else if (enemy.getColor() != piece.getColor()) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								piece.moveTo(new Vector2f(offX, offY));
+								enemy.setPosition(getOutPosition(piece.getColor()));
+								enemy.setInPlay(false);
+								swapSides(piece.getColor());
+							});
+							break;
+						} else {
+							break;
+						}
+					}
+				}
+				// Up, Left
+				for (int offDir = 1; offDir <= 7; offDir++) {
+					int offX, offY;
+					if ((offX = ppx - offDir) > 0 && (offY = ppy + offDir) <= 8) {
+						var enemy = getPieceAtPosition(offX, offY);
+						if (enemy == null) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								piece.moveTo(new Vector2f(offX, offY));
+								swapSides(piece.getColor());
+							});
+						} else if (enemy.getColor() != piece.getColor()) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								piece.moveTo(new Vector2f(offX, offY));
+								enemy.setPosition(getOutPosition(piece.getColor()));
+								enemy.setInPlay(false);
+								swapSides(piece.getColor());
+							});
+							break;
+						} else {
+							break;
+						}
+					}
+				}
+				// Down, Right
+				for (int offDir = 1; offDir <= 7; offDir++) {
+					int offX, offY;
+					if ((offX = ppx + offDir) <= 8 && (offY = ppy - offDir) > 0) {
+						var enemy = getPieceAtPosition(offX, offY);
+						if (enemy == null) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								piece.moveTo(new Vector2f(offX, offY));
+								swapSides(piece.getColor());
+							});
+						} else if (enemy.getColor() != piece.getColor()) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								piece.moveTo(new Vector2f(offX, offY));
+								enemy.setPosition(getOutPosition(piece.getColor()));
+								enemy.setInPlay(false);
+								swapSides(piece.getColor());
+							});
+							break;
+						} else {
+							break;
+						}
+					}
+				}
+				// Down, Left
+				for (int offDir = 1; offDir <= 7; offDir++) {	int offX, offY;
+					if ((offX = ppx - offDir) > 0 && (offY = ppy - offDir) > 0) {
+						var enemy = getPieceAtPosition(offX, offY);
+						if (enemy == null) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								piece.moveTo(new Vector2f(offX, offY));
+								swapSides(piece.getColor());
+							});
+						} else if (enemy.getColor() != piece.getColor()) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								piece.moveTo(new Vector2f(offX, offY));
+								enemy.setPosition(getOutPosition(piece.getColor()));
+								enemy.setInPlay(false);
+								swapSides(piece.getColor());
+							});
+							break;
+						} else {
+							break;
+						}
+					}
+				}
+			}
+			case QUEEN -> {
+				// To the right
+				for (int x = 1; x <= 7; x++) {
+					int offX = ppx + x;
+					if (offX > 8) break;
+					var enemy = getPieceAtPosition(offX, ppy);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							piece.moveTo(new Vector2f(offX, ppy));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							piece.moveTo(new Vector2f(offX, ppy));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+						break;
+					} else {
+						break;
+					}
+				}
+				// To the left
+				for (int x = 1; x <= 7; x++) {
+					int offX = ppx - x;
+					if (offX <= 0) break;
+					var enemy = getPieceAtPosition(offX, ppy);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							piece.moveTo(new Vector2f(offX, ppy));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()){
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							piece.moveTo(new Vector2f(offX, ppy));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+						break;
+					} else {
+						break;
+					}
+				}
+				// To the top
+				for (int y = 1; y <= 7; y++) {
+					int offY = ppy + y;
+					if (offY > 8) break;
+					var enemy = getPieceAtPosition(ppx, offY);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							piece.moveTo(new Vector2f(ppx, offY));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							piece.moveTo(new Vector2f(ppx, offY));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+						break;
+					} else {
+						break;
+					}
+				}
+				// To the bottom
+				for (int y = 1; y <= 7; y++) {
+					int offY = ppy - y;
+					if (offY <= 0) break;
+					var enemy = getPieceAtPosition(ppx, offY);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							piece.moveTo(new Vector2f(ppx, offY));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							piece.moveTo(new Vector2f(ppx, offY));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+						break;
+					} else {
+						break;
+					}
+				}
+				// Up, Right
+				for (int offDir = 1; offDir <= 7; offDir++) {
+					int offX, offY;
+					if ((offX = ppx + offDir) <= 8 && (offY = ppy + offDir) <= 8) {
+						var enemy = getPieceAtPosition(offX, offY);
+						if (enemy == null) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								piece.moveTo(new Vector2f(offX, offY));
+								swapSides(piece.getColor());
+							});
+						} else if (enemy.getColor() != piece.getColor()) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								piece.moveTo(new Vector2f(offX, offY));
+								enemy.setPosition(getOutPosition(piece.getColor()));
+								enemy.setInPlay(false);
+								swapSides(piece.getColor());
+							});
+							break;
+						} else {
+							break;
+						}
+					}
+				}
+				// Up, Left
+				for (int offDir = 1; offDir <= 7; offDir++) {
+					int offX, offY;
+					if ((offX = ppx - offDir) > 0 && (offY = ppy + offDir) <= 8) {
+						var enemy = getPieceAtPosition(offX, offY);
+						if (enemy == null) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								piece.moveTo(new Vector2f(offX, offY));
+								swapSides(piece.getColor());
+							});
+						} else if (enemy.getColor() != piece.getColor()) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								piece.moveTo(new Vector2f(offX, offY));
+								enemy.setPosition(getOutPosition(piece.getColor()));
+								enemy.setInPlay(false);
+								swapSides(piece.getColor());
+							});
+							break;
+						} else {
+							break;
+						}
+					}
+				}
+				// Down, Right
+				for (int offDir = 1; offDir <= 7; offDir++) {
+					int offX, offY;
+					if ((offX = ppx + offDir) <= 8 && (offY = ppy - offDir) > 0) {
+						var enemy = getPieceAtPosition(offX, offY);
+						if (enemy == null) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								piece.moveTo(new Vector2f(offX, offY));
+								swapSides(piece.getColor());
+							});
+						} else if (enemy.getColor() != piece.getColor()) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								piece.moveTo(new Vector2f(offX, offY));
+								enemy.setPosition(getOutPosition(piece.getColor()));
+								enemy.setInPlay(false);
+								swapSides(piece.getColor());
+							});
+							break;
+						} else {
+							break;
+						}
+					}
+				}
+				// Down, Left
+				for (int offDir = 1; offDir <= 7; offDir++) {	int offX, offY;
+					if ((offX = ppx - offDir) > 0 && (offY = ppy - offDir) > 0) {
+						var enemy = getPieceAtPosition(offX, offY);
+						if (enemy == null) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								piece.moveTo(new Vector2f(offX, offY));
+								swapSides(piece.getColor());
+							});
+						} else if (enemy.getColor() != piece.getColor()) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								piece.moveTo(new Vector2f(offX, offY));
+								enemy.setPosition(getOutPosition(piece.getColor()));
+								enemy.setInPlay(false);
+								swapSides(piece.getColor());
+							});
+							break;
+						} else {
+							break;
+						}
+					}
+
+				}
+			}
+			case KING -> {
+				int offX, offY;
+				if ((offX = ppx + 1) <= 8) {
+					int fx = offX;
+					var enemy = getPieceAtPosition(offX, ppy);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							piece.moveTo(new Vector2f(fx, ppy));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							piece.moveTo(new Vector2f(fx, ppy));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				}
+				if ((offX = ppx + 1) <= 8 && (offY = ppy + 1) <= 8) {
+					int fx = offX, fy = offY;
+					var enemy = getPieceAtPosition(offX, offY);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(fx, fy));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(fx, fy));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				}
+				if ((offY = ppy + 1) <= 8) {
+					int fy = offY;
+					var enemy = getPieceAtPosition(ppx, offY);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							piece.moveTo(new Vector2f(ppx, fy));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							piece.moveTo(new Vector2f(ppx, fy));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				}
+				if ((offX = ppx - 1) > 0 && (offY = ppy + 1) <= 8) {
+					int fx = offX, fy = offY;
+					var enemy = getPieceAtPosition(offX, offY);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(fx, fy));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(fx, fy));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				}
+				if ((offX = ppx - 1) > 0) {
+					int fx = offX;
+					var enemy = getPieceAtPosition(offX, ppy);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							piece.moveTo(new Vector2f(fx, ppy));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							piece.moveTo(new Vector2f(fx, ppy));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				}
+				if ((offX = ppx - 1) > 0 && (offY = ppy - 1) > 0) {
+					int fx = offX, fy = offY;
+					var enemy = getPieceAtPosition(offX, offY);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(fx, fy));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(fx, fy));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				}
+				if ((offY = ppy - 1) > 0) {
+					int fy = offY;
+					var enemy = getPieceAtPosition(ppx, offY);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+						piece.moveTo(new Vector2f(ppx, fy));
+						swapSides(piece.getColor());
+					});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							piece.moveTo(new Vector2f(ppx, fy));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				}
+				if ((offX = ppx + 1) <= 8 && (offY = ppy - 1) > 0) {
+					int fx = offX, fy = offY;
+					var enemy = getPieceAtPosition(offX, offY);
+					if (enemy == null) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(fx, fy));
+							swapSides(piece.getColor());
+						});
+					} else if (enemy.getColor() != piece.getColor()) {
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							piece.moveTo(new Vector2f(fx, fy));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
 				}
 			}
 		}
 	}
+
+	// TODO implement a cull moves method that removes any move that puts the king in a checkmate state or doesn't remove the king from the check state
 }

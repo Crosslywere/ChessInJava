@@ -2,6 +2,7 @@ package com.crossly.chess;
 
 import com.crossly.engine.graphics.Framebuffer;
 import com.crossly.engine.graphics.Renderbuffer;
+import org.joml.Vector2f;
 
 import static org.lwjgl.opengl.GL33.*;
 
@@ -10,6 +11,9 @@ public class BoardFramebuffer extends Framebuffer {
 	public record Data(int pieceId, int boardPosId) {
 		public static int generateBoardPosId(int x, int y) {
 			return (x << 3) + y;
+		}
+		public static int generateBoardPosId(Vector2f pos) {
+			return generateBoardPosId((int) pos.x(), (int) pos.y());
 		}
 	}
 

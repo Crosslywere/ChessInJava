@@ -45,6 +45,11 @@ public class ChessGame extends Engine {
 				boardManager.pick(pos);
 			}
 		}
+		if (input.isKeyJustPressed(Input.KEY_D))
+			boardManager.setDrawDebug(!boardManager.isDrawDebug());
+
+		if (boardManager.isSwitchingSides())
+			boardManager.rotateToSide();
 	}
 
 	public void onRender() {
@@ -79,7 +84,7 @@ public class ChessGame extends Engine {
 				- Press the [Esc] key to exit the application.
 				
 				Click anywhere to resume...
-				""", new Vector2f(8, 128), 64, new Vector3f(0, .5f, 1));
+				""", new Vector2f(8, 48), 48, new Vector3f(0, .5f, 1));
 	}
 
 }
