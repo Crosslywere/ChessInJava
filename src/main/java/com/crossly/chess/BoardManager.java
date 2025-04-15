@@ -12,10 +12,7 @@ import java.io.IOException;
 import java.lang.Math;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 public class BoardManager {
 
@@ -96,6 +93,7 @@ public class BoardManager {
 	private boolean switchingSides = false;
 	private float timer = 0;
 	private boolean drawDebug = false;
+	private int promotablePieceId = -1;
 
 	public BoardManager(int width, int height) {
 		framebuffer = new BoardFramebuffer(width, height);
@@ -213,6 +211,20 @@ public class BoardManager {
 		return drawDebug;
 	}
 
+	public boolean isPiecePromotable() {
+		return promotablePieceId > 0;
+	}
+
+	public void promotePiece(ChessPiece.Type type) {
+		pieces.stream().filter(p -> p.getPieceId() == promotablePieceId && p.isInPlay()).findFirst()
+				.ifPresent(piece -> {
+					piece.setType(type);
+					swapSides(piece.getColor());
+				});
+
+		promotablePieceId = -1;
+	}
+
 	public void setDrawDebug(boolean drawDebug) {
 		this.drawDebug = drawDebug;
 	}
@@ -250,9 +262,12 @@ public class BoardManager {
 			// Take or deselect
 		} else if (selected && data.boardPosId() >= 0) {
 			// Move or deselect
-			if (moveActions.containsKey(data.boardPosId()))
+			if (moveActions.containsKey(data.boardPosId())) {
 				moveActions.get(data.boardPosId()).fn();
-			else
+				if (selectedPiece != null && selectedPiece.getType() == ChessPiece.Type.PAWN && ((int) selectedPiece.getPosition().y() == 8 || (int) selectedPiece.getPosition().y() == 1)) {
+					promotablePieceId = selectedPiece.getPieceId();
+				}
+			} else
 				selectedPiece = null;
 		} else {
 			selectedPiece = pieces.stream().filter(piece -> piece.getPieceId() == data.pieceId() && piece.getColor() == turn && piece.isInPlay()).findFirst().orElse(null);
@@ -337,9 +352,11 @@ public class BoardManager {
 				if (getPieceAtPosition(ppx, ppy + dir) == null) {
 					moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, ppy + dir), () -> {
 						piece.moveTo(new Vector2f(ppx, ppy + dir));
-						swapSides(piece.getColor());
+						if (ppy + dir < 8 && ppy + dir > 1) {
+							swapSides(piece.getColor());
+						}
 					});
-					if (!piece.isMoved() && getPieceAtPosition(ppx, ppy + dir * 2) == null) {
+					if (piece.isNotMoved() && getPieceAtPosition(ppx, ppy + dir * 2) == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, ppy + dir * 2), () -> {
 							piece.moveTo(new Vector2f(ppx, piece.getPosition().y() + dir * 2));
 							swapSides(piece.getColor());
@@ -353,7 +370,9 @@ public class BoardManager {
 							piece.moveTo(new Vector2f(ppx + 1, ppy + dir));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
-							swapSides(piece.getColor());
+							if (ppy + dir < 8 && ppy + dir > 1) {
+								swapSides(piece.getColor());
+							}
 						});
 					}
 				}
@@ -364,7 +383,9 @@ public class BoardManager {
 							piece.moveTo(new Vector2f(ppx - 1, ppy + dir));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
-							swapSides(piece.getColor());
+							if (ppy + dir < 8 && ppy + dir > 1) {
+								swapSides(piece.getColor());
+							}
 						});
 					}
 				}
@@ -883,7 +904,7 @@ public class BoardManager {
 							piece.moveTo(new Vector2f(fx, ppy));
 							swapSides(piece.getColor());
 						});
-					} else if (enemy.getColor() != piece.getColor()) {
+					} else if (enemy.getColor() != piece.getColor() && enemy.getType() != ChessPiece.Type.KING) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
 							piece.moveTo(new Vector2f(fx, ppy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
@@ -900,7 +921,7 @@ public class BoardManager {
 							piece.moveTo(new Vector2f(fx, fy));
 							swapSides(piece.getColor());
 						});
-					} else if (enemy.getColor() != piece.getColor()) {
+					} else if (enemy.getColor() != piece.getColor() && enemy.getType() != ChessPiece.Type.KING) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
 							piece.moveTo(new Vector2f(fx, fy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
@@ -917,7 +938,7 @@ public class BoardManager {
 							piece.moveTo(new Vector2f(ppx, fy));
 							swapSides(piece.getColor());
 						});
-					} else if (enemy.getColor() != piece.getColor()) {
+					} else if (enemy.getColor() != piece.getColor() && enemy.getType() != ChessPiece.Type.KING) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
 							piece.moveTo(new Vector2f(ppx, fy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
@@ -934,7 +955,7 @@ public class BoardManager {
 							piece.moveTo(new Vector2f(fx, fy));
 							swapSides(piece.getColor());
 						});
-					} else if (enemy.getColor() != piece.getColor()) {
+					} else if (enemy.getColor() != piece.getColor() && enemy.getType() != ChessPiece.Type.KING) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
 							piece.moveTo(new Vector2f(fx, fy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
@@ -951,7 +972,7 @@ public class BoardManager {
 							piece.moveTo(new Vector2f(fx, ppy));
 							swapSides(piece.getColor());
 						});
-					} else if (enemy.getColor() != piece.getColor()) {
+					} else if (enemy.getColor() != piece.getColor() && enemy.getType() != ChessPiece.Type.KING) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
 							piece.moveTo(new Vector2f(fx, ppy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
@@ -968,7 +989,7 @@ public class BoardManager {
 							piece.moveTo(new Vector2f(fx, fy));
 							swapSides(piece.getColor());
 						});
-					} else if (enemy.getColor() != piece.getColor()) {
+					} else if (enemy.getColor() != piece.getColor() && enemy.getType() != ChessPiece.Type.KING) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
 							piece.moveTo(new Vector2f(fx, fy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
@@ -985,7 +1006,7 @@ public class BoardManager {
 						piece.moveTo(new Vector2f(ppx, fy));
 						swapSides(piece.getColor());
 					});
-					} else if (enemy.getColor() != piece.getColor()) {
+					} else if (enemy.getColor() != piece.getColor() && enemy.getType() != ChessPiece.Type.KING) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
 							piece.moveTo(new Vector2f(ppx, fy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
@@ -1002,13 +1023,51 @@ public class BoardManager {
 							piece.moveTo(new Vector2f(fx, fy));
 							swapSides(piece.getColor());
 						});
-					} else if (enemy.getColor() != piece.getColor()) {
+					} else if (enemy.getColor() != piece.getColor() && enemy.getType() != ChessPiece.Type.KING) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
 							piece.moveTo(new Vector2f(fx, fy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
 							swapSides(piece.getColor());
 						});
+					}
+				}
+				// King side castling
+				if (piece.isNotMoved()) {
+					boolean castlable = false;
+					for (int i = 1; i < 3; i++) {
+						castlable = getPieceAtPosition(ppx - i, ppy) == null;
+						if (!castlable)
+							break;
+					}
+					if (castlable) {
+						var castle = getPieceAtPosition(ppx - 3, ppy);
+						if (castle != null && castle.isNotMoved() && castle.getType() == ChessPiece.Type.ROOK && castle.getColor() == piece.getColor()) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx - 2, ppy), () -> {
+								piece.moveTo(new Vector2f(ppx - 2, ppy));
+								castle.moveTo(new Vector2f(ppx - 1, ppy));
+								swapSides(piece.getColor());
+							});
+						}
+					}
+				}
+				// Queen side castling
+				if (piece.isNotMoved()) {
+					boolean castlable = false;
+					for (int i = 1; i < 4; i++) {
+						castlable = getPieceAtPosition(ppx + i, ppy) == null;
+						if (!castlable)
+							break;
+					}
+					if (castlable) {
+						var castle = getPieceAtPosition(ppx + 4, ppy);
+						if (castle != null && castle.isNotMoved() && castle.getType() == ChessPiece.Type.ROOK && castle.getColor() == piece.getColor()) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx + 2, ppy), () -> {
+								piece.moveTo(new Vector2f(ppx + 2, ppy));
+								castle.moveTo(new Vector2f(ppx + 1, ppy));
+								swapSides(piece.getColor());
+							});
+						}
 					}
 				}
 			}

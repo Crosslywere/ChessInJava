@@ -119,8 +119,8 @@ public class ChessPiece {
 		this.moved = true;
 	}
 
-	public boolean isMoved() {
-		return moved;
+	public boolean isNotMoved() {
+		return !moved;
 	}
 
 	public boolean isInPlay() {

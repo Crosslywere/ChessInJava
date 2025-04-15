@@ -9,7 +9,6 @@ import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
@@ -40,13 +39,26 @@ public class ChessGame extends Engine {
 			else
 				overlaid = true;
 		}
-		if (input.isButtonJustPressed(Input.MOUSE_BUTTON_LEFT)) {
+		if (input.isButtonJustPressed(Input.MOUSE_BUTTON_LEFT) && !boardManager.isPiecePromotable()) {
 			if (overlaid)
 				overlaid = false;
 			else {
 				Vector2i pos = input.getMousePos();
 				pos.y = getWindowHeight() - pos.y();
 				boardManager.pick(pos);
+			}
+		} else if (boardManager.isPiecePromotable()) {
+			if (input.isKeyPressed(Input.KEY_B)) {
+				boardManager.promotePiece(ChessPiece.Type.BISHOP);
+			}
+			if (input.isKeyPressed(Input.KEY_Q)) {
+				boardManager.promotePiece(ChessPiece.Type.QUEEN);
+			}
+			if (input.isKeyPressed(Input.KEY_R)) {
+				boardManager.promotePiece(ChessPiece.Type.ROOK);
+			}
+			if (input.isKeyPressed(Input.KEY_K)) {
+				boardManager.promotePiece(ChessPiece.Type.KNIGHT);
 			}
 		}
 		if (input.isKeyJustPressed(Input.KEY_D))
@@ -67,6 +79,8 @@ public class ChessGame extends Engine {
 		boardManager.render();
 		if (overlaid)
 			renderOverlay();
+		else if (boardManager.isPiecePromotable())
+			renderPromotionOverlay();
 	}
 
 	public void onExit() {
@@ -85,6 +99,17 @@ public class ChessGame extends Engine {
 
 	public static void main(String[] args) {
 		new ChessGame().play();
+	}
+
+	private void renderPromotionOverlay() {
+		writer.writeText("""
+				A pawn can be promoted!
+				Press on of the following keys to promote it!
+				- [Q] for Queen
+				- [B] for Bishop
+				- [K] for Knight
+				- [R] for Rook
+""", new Vector2f(8, 48), 48);
 	}
 
 	private void renderOverlay() {

@@ -20,6 +20,12 @@ Attempting to create a 3D engine with chess as the example game
 
 - [IBMPlexSerif.ttf](https://fonts.google.com) - from fonts.google.com
 
+### Rules for Chess
+
+- [Chess Delta](https://chessdelta.com/chess-pieces-moves/)
+
+> All resources not attributed are created by me and are therefore subject to the same license as this software
+
 # How to use
 
 You can run the TestingApplication class located [here](src/test/java/com/crossly/TestingApplication.java)
