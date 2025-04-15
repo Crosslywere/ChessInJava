@@ -40,9 +40,10 @@ Run the Chess class located [here](src/main/java/com/crossly/chess/Chess.java)
 
 ![ScreenShot](./ChessInJava.png)
 
-It can be played normally with basic moves. But no detection of Check Mate has been implemented, and the game doesn't end when the king is taken.
+It can be played normally with basic moves & special moves.
+But no detection of Check Mate has been implemented, and the game doesn't end when the king is taken.
 Basic instructions are rendered on the screen once the application is started.
 
 ### Currently Focused On
 
-- Implementing special moves
+- Detecting check mates
