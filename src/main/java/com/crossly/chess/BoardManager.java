@@ -389,6 +389,46 @@ public class BoardManager {
 						});
 					}
 				}
+				// En passant
+				if (piece.getColor() == ChessPiece.Color.WHITE) {
+					if (ppy == 5 && getPieceAtPosition(ppx + 1, ppy) != null) {
+						var enemy = getPieceAtPosition(ppx + 1, ppy);
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx + 1, ppy + dir), () -> {
+							piece.moveTo(new Vector2f(ppx + 1, ppy + dir));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+					if (ppy == 5 && getPieceAtPosition(ppx - 1, ppy) != null) {
+						var enemy = getPieceAtPosition(ppx - 1, ppy);
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx - 1, ppy + dir), () -> {
+							piece.moveTo(new Vector2f(ppx - 1, ppy + dir));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				} else {
+					if (ppy == 4 && getPieceAtPosition(ppx + 1, ppy) != null) {
+						var enemy = getPieceAtPosition(ppx + 1, ppy);
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx + 1, ppy + dir), () -> {
+							piece.moveTo(new Vector2f(ppx + 1, ppy + dir));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+					if (ppy == 4 && getPieceAtPosition(ppx - 1, ppy) != null) {
+						var enemy = getPieceAtPosition(ppx - 1, ppy);
+						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx - 1, ppy + dir), () -> {
+							piece.moveTo(new Vector2f(ppx - 1, ppy + dir));
+							enemy.setPosition(getOutPosition(piece.getColor()));
+							enemy.setInPlay(false);
+							swapSides(piece.getColor());
+						});
+					}
+				}
 			}
 			case ROOK -> {
 				// To the right
