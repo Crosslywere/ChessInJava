@@ -109,7 +109,7 @@ public class ChessGame extends Engine {
 				- [B] for Bishop
 				- [K] for Knight
 				- [R] for Rook
-""", new Vector2f(8, 48), 48);
+				""", new Vector2f(8, 48), 48);
 	}
 
 	private void renderOverlay() {
