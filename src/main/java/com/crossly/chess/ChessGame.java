@@ -9,6 +9,10 @@ import org.joml.Vector2f;
 import org.joml.Vector2i;
 import org.joml.Vector3f;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 public class ChessGame extends Engine {
 
 	private BoardManager boardManager;
@@ -48,6 +52,12 @@ public class ChessGame extends Engine {
 		if (input.isKeyJustPressed(Input.KEY_D))
 			boardManager.setDrawDebug(!boardManager.isDrawDebug());
 
+		if (input.isKeyJustPressed(Input.KEY_F5))
+			quickSave();
+
+		if (input.isKeyJustPressed(Input.KEY_F9))
+			quickLoad();
+
 		if (boardManager.isSwitchingSides())
 			boardManager.rotateToSide();
 	}
@@ -62,6 +72,8 @@ public class ChessGame extends Engine {
 	public void onExit() {
 		writer.getFontAtlas().delete();
 		ChessPiece.destroyModels();
+		boardManager.deleteFramebuffer();
+		BoardManager.delete();
 	}
 
 	public void onResize() {
@@ -81,10 +93,32 @@ public class ChessGame extends Engine {
 				Instructions:
 				- Left click on a piece to select it.
 				- Left click on the void space to deselect.
+				- Press the [D] key to toggle rendering possible moves.
 				- Press the [Esc] key to exit the application.
+				- [F5] Quick Save.
+				- [F9] Quick Load.
 				
 				Click anywhere to resume...
 				""", new Vector2f(8, 48), 48, new Vector3f(0, .5f, 1));
 	}
 
+	private void quickSave() {
+		try {
+			FileWriter writer = new FileWriter("save.txt");
+			writer.write(boardManager.generateSave());
+			writer.close();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	private void quickLoad() {
+		try {
+			String filepath = Engine.getAbsolutePath("save.txt");
+			boardManager.deleteFramebuffer();
+			boardManager = new BoardManager(getWindowWidth(), getWindowHeight(), filepath);
+		} catch (RuntimeException e) {
+			System.err.println("No save file found!");
+		}
+	}
 }

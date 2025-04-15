@@ -7,6 +7,9 @@ Attempting to create a 3D engine with chess as the example game
 ### Audio
 
 - [stab-f-01-brvhrtz-224599.mp3](https://pixabay.com/sound-effects/stab-f-01-brvhrtz-224599/) - from pixabay.com
+
+### Texture
+
 - [wall.jpg](https://learnopengl.com) - from learnopengl.com
 
 ### Font Rendering Tutorial
@@ -15,8 +18,7 @@ Attempting to create a 3D engine with chess as the example game
 
 ### Fonts
 
-- [SpaceMono.ttf](https://fonts.google.com)
-- [PlayfairDisplay.ttf](https://font.google.com)
+- [IBMPlexSerif.ttf](https://fonts.google.com) - from fonts.google.com
 
 # How to use
 
@@ -30,8 +32,11 @@ It also implements a fly camera ie `W`,`A`,`S`,`D` to move & hold the `Right Mou
 
 Run the Chess class located [here](src/main/java/com/crossly/chess/Chess.java)
 
-It doesn't do much currently. Other than render some pawn and changes their color when they are selected(clicked on).
+![ScreenShot](./ChessInJava.png)
+
+It can be played normally with basic moves. But no detection of Check Mate has been implemented, and the game doesn't end when the king is taken.
+Basic instructions are rendered on the screen once the application is started.
 
 ### Currently Focused On
 
-- Font rendering
+- Implementing special moves

@@ -1,5 +1,6 @@
 package com.crossly.chess;
 
+import com.crossly.engine.Engine;
 import com.crossly.engine.graphics.Camera3D;
 import com.crossly.engine.graphics.Framebuffer;
 import com.crossly.engine.graphics.Mesh;
@@ -7,10 +8,14 @@ import com.crossly.engine.graphics.Shader;
 import com.crossly.engine.time.Timer;
 import org.joml.*;
 
+import java.io.IOException;
 import java.lang.Math;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 
 public class BoardManager {
 
@@ -120,6 +125,46 @@ public class BoardManager {
 		camera.setPitch(45);
 	}
 
+	public BoardManager(int width, int height, String filepath) {
+		this(width, height);
+		try {
+			String data = new String(Files.readAllBytes(Paths.get(Engine.getAbsolutePath(filepath))));
+			pieces.clear();
+			Scanner scn = new Scanner(data);
+			ChessPiece.Color current = null;
+			while (scn.hasNextLine()) {
+				String line = scn.nextLine();
+				if (line.contains("#WHITE")) {
+					current = ChessPiece.Color.WHITE;
+					continue;
+				}else if (line.contains("#BLACK")) {
+					current = ChessPiece.Color.BLACK;
+					continue;
+				} else if (line.contains("#EXTRA") && scn.hasNextLine()) {
+					current = null;
+					continue;
+				}
+				if (current != null) {
+					var piece = new ChessPiece(line, current);
+					var position = piece.getPosition();
+					if (position.x() > 8 || position.x() <= 0) {
+						piece.setInPlay(false);
+						getOutPosition(current == ChessPiece.Color.BLACK ? ChessPiece.Color.WHITE : ChessPiece.Color.BLACK);
+					}
+					pieces.add(piece);
+				} else {
+					turn = ChessPiece.Color.valueOf(line);
+					if (turn == ChessPiece.Color.BLACK) {
+						camera.setYaw(180);
+						camera.setPosition(new Vector3f(4.5f, 8, 13));
+					}
+				}
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	public void resizeFramebuffer(int width, int height) {
 		framebuffer.delete();
 		framebuffer = new BoardFramebuffer(width, height);
@@ -222,6 +267,30 @@ public class BoardManager {
 				generateMoves(selectedPiece);
 		}
 		selected = selectedPiece != null;
+	}
+
+	public void deleteFramebuffer() {
+		framebuffer.delete();
+	}
+
+	public static void delete() {
+		BOARD_FLAT_SHADER.delete();
+		PIECE_DIFFUSE_SHADER.delete();
+	}
+
+	public String generateSave() {
+		StringBuilder saveData = new StringBuilder();
+		saveData.append("#WHITE\n");
+		for (var piece : pieces.stream().filter(P -> ChessPiece.Color.WHITE == P.getColor()).toList()) {
+			saveData.append(piece.toString()).append('\n');
+		}
+		saveData.append("#BLACK\n");
+		for (var piece : pieces.stream().filter(P -> ChessPiece.Color.BLACK == P.getColor()).toList()) {
+			saveData.append(piece.toString()).append('\n');
+		}
+		saveData.append("#EXTRA\n");
+		saveData.append(turn.name()).append('\n');
+		return saveData.toString();
 	}
 
 	private ChessPiece getPieceAtPosition(int x, int y) {

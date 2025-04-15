@@ -54,6 +54,42 @@ public class ChessPiece {
 		this.position = position;
 	}
 
+	public ChessPiece(String param, Color color) throws IllegalArgumentException {
+		this.color = color;
+		String[] params = param.split(" ");
+		if (params.length < 4) {
+			throw new IllegalArgumentException("Incomplete parameters for creating chess piece!");
+		}
+		try {
+			type = Type.valueOf(params[0]);
+		} catch (IllegalArgumentException e) {
+			throw new IllegalArgumentException("Invalid chess piece type '" + params[0] + "'");
+		}
+		try {
+			pieceId = Integer.parseInt(params[1]);
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException("Invalid chess piece id '" + params[1] + "'");
+		}
+		String[] xyPos = params[2].split(",");
+		if (xyPos.length != 2) {
+			throw new IllegalArgumentException("Invalid chess piece pos data '" + params[2] + "'");
+		}
+		position = new Vector2f();
+		try {
+			position.x = Integer.parseInt(xyPos[0]);
+			position.y = Integer.parseInt(xyPos[1]);
+		} catch (NumberFormatException e) {
+			throw new IllegalArgumentException("Invalid chess piece pos data '" + params[2] + "'");
+		}
+		if (params[3].equalsIgnoreCase("true")) {
+			moved = true;
+		} else if (params[3].equalsIgnoreCase("false")) {
+			moved = false;
+		} else {
+			throw new IllegalArgumentException("Invalid chess piece moved '" + params[3] + "'");
+		}
+	}
+
 	public int getPieceId() {
 		return pieceId;
 	}
@@ -99,5 +135,11 @@ public class ChessPiece {
 		for (var type : Type.values()) {
 			type.getModel().delete();
 		}
+	}
+
+	@Override
+	public String toString() {
+		return type.name() + ' ' + pieceId + ' ' +
+				(int) position.x() + ',' + (int) position.y() + ' ' + moved;
 	}
 }
