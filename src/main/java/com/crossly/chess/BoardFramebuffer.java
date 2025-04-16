@@ -10,7 +10,7 @@ public class BoardFramebuffer extends Framebuffer {
 
 	public record Data(int pieceId, int boardPosId) {
 		public static int generateBoardPosId(int x, int y) {
-			return (x << 3) + y;
+			return (x << 4) + y;
 		}
 		public static int generateBoardPosId(Vector2f pos) {
 			return generateBoardPosId((int) pos.x(), (int) pos.y());
