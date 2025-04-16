@@ -81,6 +81,8 @@ public class ChessGame extends Engine {
 			renderOverlay();
 		else if (boardManager.isPiecePromotable())
 			renderPromotionOverlay();
+		if (boardManager.isChecked())
+			renderCheckOverlay();
 	}
 
 	public void onExit() {
@@ -101,6 +103,12 @@ public class ChessGame extends Engine {
 		new ChessGame().play();
 	}
 
+	private static final Vector3f FONT_RENDER_COLOR = new Vector3f(0, .5f, 1);
+
+	private void renderCheckOverlay() {
+		writer.writeText("Check...", new Vector2f(8, 48), 48, FONT_RENDER_COLOR);
+	}
+
 	private void renderPromotionOverlay() {
 		writer.writeText("""
 				A pawn can be promoted!
@@ -109,7 +117,7 @@ public class ChessGame extends Engine {
 				- [B] for Bishop
 				- [K] for Knight
 				- [R] for Rook
-				""", new Vector2f(8, 48), 48);
+				""", new Vector2f(8, 48), 48, FONT_RENDER_COLOR);
 	}
 
 	private void renderOverlay() {
@@ -124,7 +132,7 @@ public class ChessGame extends Engine {
 				- [F9] Quick Load.
 				
 				Click anywhere to resume...
-				""", new Vector2f(8, 48), 48, new Vector3f(0, .5f, 1));
+				""", new Vector2f(8, 48), 48, FONT_RENDER_COLOR);
 	}
 
 	private void quickSave() {
