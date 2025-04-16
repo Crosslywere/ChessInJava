@@ -253,13 +253,13 @@ public class BoardManager {
 	public void pick(Vector2i screenPos) {
 		var data = framebuffer.getIds(screenPos.x(), screenPos.y());
 		if (selected && data.pieceId() >= 0) {
+			// Take or deselect
 			pieces.stream().filter(p -> p.getPieceId() == data.pieceId() && p.isInPlay()).findFirst()
 					.ifPresentOrElse(piece -> {
 						int boardId = BoardFramebuffer.Data.generateBoardPosId(piece.getPosition());
 						if (moveActions.containsKey(boardId))
 							moveActions.get(boardId).fn();
 					}, () -> selectedPiece = null);
-			// Take or deselect
 		} else if (selected && data.boardPosId() >= 0) {
 			// Move or deselect
 			if (moveActions.containsKey(data.boardPosId())) {
@@ -334,6 +334,7 @@ public class BoardManager {
 			}
 		}
 		selectedPiece = null;
+		selected = false;
 		turn = color == ChessPiece.Color.WHITE ? ChessPiece.Color.BLACK : ChessPiece.Color.WHITE;
 		switchingSides = true;
 	}
@@ -1406,6 +1407,26 @@ public class BoardManager {
 		return possibleMoveIds;
 	}
 
+	private ArrayList<Integer> generateNonTakeMoves(ChessPiece piece) {
+		int ppx = (int) piece.getPosition().x();
+		int ppy = (int) piece.getPosition().y();
+		switch (piece.getType()) {
+			case PAWN -> {
+				int dir = piece.getColor() == ChessPiece.Color.BLACK ? -1 : 1;
+				ArrayList<Integer> list = new ArrayList<>(2);
+				if (ppy + dir > 0 && ppy + dir <= 8) {
+					list.add(BoardFramebuffer.Data.generateBoardPosId(ppx, ppy + dir));
+					if (piece.isNotMoved() && ppy + (2 * dir) > 0 && ppy + (2 * dir) <= 8)
+						list.add(BoardFramebuffer.Data.generateBoardPosId(ppx, ppy + (2 * dir)));
+				}
+				return list;
+			}
+			case null, default -> {
+				return new ArrayList<>();
+			}
+		}
+	}
+
 	private void cullUnsafe() {
 		if (selectedPiece != null) {
 			if (selectedPiece.getType() == ChessPiece.Type.KING) {
@@ -1416,6 +1437,7 @@ public class BoardManager {
 					}
 				}
 			}
+
 			// TODO Remove moves that don't take the checking piece or block the checking piece
 		}
 	}
