@@ -368,6 +368,7 @@ public class BoardManager {
 			case PAWN -> {
 				if (getPieceAtPosition(ppx, ppy + dir) == null) {
 					moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, ppy + dir), () -> {
+						pieces.forEach(ChessPiece::unsetLastPosition);
 						piece.moveTo(new Vector2f(ppx, ppy + dir));
 						if (ppy + dir < 8 && ppy + dir > 1) {
 							swapSides(piece.getColor());
@@ -375,6 +376,7 @@ public class BoardManager {
 					});
 					if (piece.isNotMoved() && getPieceAtPosition(ppx, ppy + dir * 2) == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, ppy + dir * 2), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(ppx, piece.getPosition().y() + dir * 2));
 							swapSides(piece.getColor());
 						});
@@ -384,6 +386,7 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(ppx + 1, (int) piece.getPosition().y() + dir);
 					if (enemy != null && enemy.getColor() != piece.getColor()) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx + 1, ppy + dir), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(ppx + 1, ppy + dir));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -397,6 +400,7 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(ppx - 1, (int) piece.getPosition().y() + dir);
 					if (enemy != null && enemy.getColor() != piece.getColor()) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx - 1, ppy + dir), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(ppx - 1, ppy + dir));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -410,40 +414,52 @@ public class BoardManager {
 				if (piece.getColor() == ChessPiece.Color.WHITE) {
 					if (ppy == 5 && getPieceAtPosition(ppx + 1, ppy) != null) {
 						var enemy = getPieceAtPosition(ppx + 1, ppy);
-						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx + 1, ppy + dir), () -> {
-							piece.moveTo(new Vector2f(ppx + 1, ppy + dir));
-							enemy.setPosition(getOutPosition(piece.getColor()));
-							enemy.setInPlay(false);
-							swapSides(piece.getColor());
-						});
+						if (enemy.getType() == ChessPiece.Type.PAWN && enemy.getLastPosition().y() == 7) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx + 1, ppy + dir), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
+								piece.moveTo(new Vector2f(ppx + 1, ppy + dir));
+								enemy.setPosition(getOutPosition(piece.getColor()));
+								enemy.setInPlay(false);
+								swapSides(piece.getColor());
+							});
+						}
 					}
 					if (ppy == 5 && getPieceAtPosition(ppx - 1, ppy) != null) {
 						var enemy = getPieceAtPosition(ppx - 1, ppy);
-						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx - 1, ppy + dir), () -> {
-							piece.moveTo(new Vector2f(ppx - 1, ppy + dir));
-							enemy.setPosition(getOutPosition(piece.getColor()));
-							enemy.setInPlay(false);
-							swapSides(piece.getColor());
-						});
+						if (enemy.getType() == ChessPiece.Type.PAWN && enemy.getLastPosition().y() == 7) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx - 1, ppy + dir), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
+								piece.moveTo(new Vector2f(ppx - 1, ppy + dir));
+								enemy.setPosition(getOutPosition(piece.getColor()));
+								enemy.setInPlay(false);
+								swapSides(piece.getColor());
+							});
+						}
 					}
 				} else {
 					if (ppy == 4 && getPieceAtPosition(ppx + 1, ppy) != null) {
 						var enemy = getPieceAtPosition(ppx + 1, ppy);
-						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx + 1, ppy + dir), () -> {
-							piece.moveTo(new Vector2f(ppx + 1, ppy + dir));
-							enemy.setPosition(getOutPosition(piece.getColor()));
-							enemy.setInPlay(false);
-							swapSides(piece.getColor());
-						});
+						if (enemy.getType() == ChessPiece.Type.PAWN && enemy.getLastPosition().y() == 2) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx + 1, ppy + dir), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
+								piece.moveTo(new Vector2f(ppx + 1, ppy + dir));
+								enemy.setPosition(getOutPosition(piece.getColor()));
+								enemy.setInPlay(false);
+								swapSides(piece.getColor());
+							});
+						}
 					}
 					if (ppy == 4 && getPieceAtPosition(ppx - 1, ppy) != null) {
 						var enemy = getPieceAtPosition(ppx - 1, ppy);
-						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx - 1, ppy + dir), () -> {
-							piece.moveTo(new Vector2f(ppx - 1, ppy + dir));
-							enemy.setPosition(getOutPosition(piece.getColor()));
-							enemy.setInPlay(false);
-							swapSides(piece.getColor());
-						});
+						if (enemy.getType() == ChessPiece.Type.PAWN && enemy.getLastPosition().y() == 2) {
+							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx - 1, ppy + dir), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
+								piece.moveTo(new Vector2f(ppx - 1, ppy + dir));
+								enemy.setPosition(getOutPosition(piece.getColor()));
+								enemy.setInPlay(false);
+								swapSides(piece.getColor());
+							});
+						}
 					}
 				}
 			}
@@ -455,11 +471,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(offX, ppy);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(offX, ppy));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor()) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(offX, ppy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -477,11 +495,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(offX, ppy);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(offX, ppy));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor()){
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(offX, ppy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -499,11 +519,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(ppx, offY);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(ppx, offY));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor()) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(ppx, offY));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -521,11 +543,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(ppx, offY);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(ppx, offY));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor()) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(ppx, offY));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -544,11 +568,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(offX, offY);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(x, y));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor()) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(x, y));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -561,11 +587,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(offX, offY);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(x, y));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor()) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(x, y));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -578,11 +606,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(offX, offY);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(x, y));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor()) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(x, y));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -595,11 +625,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(offX, offY);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(x, y));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor()) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(x, y));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -612,11 +644,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(offX, offY);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(x, y));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor()) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(x, y));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -629,11 +663,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(offX, offY);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(x, y));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor()) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(x, y));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -646,11 +682,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(offX, offY);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(x, y));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor()) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(x, y));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -663,11 +701,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(offX, offY);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(x, y));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor()) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(x, y));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -684,11 +724,13 @@ public class BoardManager {
 						var enemy = getPieceAtPosition(offX, offY);
 						if (enemy == null) {
 							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
 								piece.moveTo(new Vector2f(offX, offY));
 								swapSides(piece.getColor());
 							});
 						} else if (enemy.getColor() != piece.getColor()) {
 							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
 								piece.moveTo(new Vector2f(offX, offY));
 								enemy.setPosition(getOutPosition(piece.getColor()));
 								enemy.setInPlay(false);
@@ -707,11 +749,13 @@ public class BoardManager {
 						var enemy = getPieceAtPosition(offX, offY);
 						if (enemy == null) {
 							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
 								piece.moveTo(new Vector2f(offX, offY));
 								swapSides(piece.getColor());
 							});
 						} else if (enemy.getColor() != piece.getColor()) {
 							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
 								piece.moveTo(new Vector2f(offX, offY));
 								enemy.setPosition(getOutPosition(piece.getColor()));
 								enemy.setInPlay(false);
@@ -730,11 +774,13 @@ public class BoardManager {
 						var enemy = getPieceAtPosition(offX, offY);
 						if (enemy == null) {
 							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
 								piece.moveTo(new Vector2f(offX, offY));
 								swapSides(piece.getColor());
 							});
 						} else if (enemy.getColor() != piece.getColor()) {
 							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
 								piece.moveTo(new Vector2f(offX, offY));
 								enemy.setPosition(getOutPosition(piece.getColor()));
 								enemy.setInPlay(false);
@@ -752,11 +798,13 @@ public class BoardManager {
 						var enemy = getPieceAtPosition(offX, offY);
 						if (enemy == null) {
 							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
 								piece.moveTo(new Vector2f(offX, offY));
 								swapSides(piece.getColor());
 							});
 						} else if (enemy.getColor() != piece.getColor()) {
 							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
 								piece.moveTo(new Vector2f(offX, offY));
 								enemy.setPosition(getOutPosition(piece.getColor()));
 								enemy.setInPlay(false);
@@ -777,11 +825,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(offX, ppy);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(offX, ppy));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor()) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(offX, ppy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -799,11 +849,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(offX, ppy);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(offX, ppy));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor()){
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(offX, ppy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -821,11 +873,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(ppx, offY);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(ppx, offY));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor()) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(ppx, offY));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -843,11 +897,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(ppx, offY);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(ppx, offY));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor()) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(ppx, offY));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -865,11 +921,13 @@ public class BoardManager {
 						var enemy = getPieceAtPosition(offX, offY);
 						if (enemy == null) {
 							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
 								piece.moveTo(new Vector2f(offX, offY));
 								swapSides(piece.getColor());
 							});
 						} else if (enemy.getColor() != piece.getColor()) {
 							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
 								piece.moveTo(new Vector2f(offX, offY));
 								enemy.setPosition(getOutPosition(piece.getColor()));
 								enemy.setInPlay(false);
@@ -888,11 +946,13 @@ public class BoardManager {
 						var enemy = getPieceAtPosition(offX, offY);
 						if (enemy == null) {
 							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
 								piece.moveTo(new Vector2f(offX, offY));
 								swapSides(piece.getColor());
 							});
 						} else if (enemy.getColor() != piece.getColor()) {
 							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
 								piece.moveTo(new Vector2f(offX, offY));
 								enemy.setPosition(getOutPosition(piece.getColor()));
 								enemy.setInPlay(false);
@@ -911,11 +971,13 @@ public class BoardManager {
 						var enemy = getPieceAtPosition(offX, offY);
 						if (enemy == null) {
 							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
 								piece.moveTo(new Vector2f(offX, offY));
 								swapSides(piece.getColor());
 							});
 						} else if (enemy.getColor() != piece.getColor()) {
 							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
 								piece.moveTo(new Vector2f(offX, offY));
 								enemy.setPosition(getOutPosition(piece.getColor()));
 								enemy.setInPlay(false);
@@ -933,11 +995,13 @@ public class BoardManager {
 						var enemy = getPieceAtPosition(offX, offY);
 						if (enemy == null) {
 							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
 								piece.moveTo(new Vector2f(offX, offY));
 								swapSides(piece.getColor());
 							});
 						} else if (enemy.getColor() != piece.getColor()) {
 							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
 								piece.moveTo(new Vector2f(offX, offY));
 								enemy.setPosition(getOutPosition(piece.getColor()));
 								enemy.setInPlay(false);
@@ -958,11 +1022,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(offX, ppy);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(fx, ppy));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor() && enemy.getType() != ChessPiece.Type.KING) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(fx, ppy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -975,11 +1041,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(offX, offY);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(fx, fy));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor() && enemy.getType() != ChessPiece.Type.KING) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(fx, fy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -992,11 +1060,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(ppx, offY);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(ppx, fy));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor() && enemy.getType() != ChessPiece.Type.KING) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(ppx, fy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -1009,11 +1079,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(offX, offY);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(fx, fy));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor() && enemy.getType() != ChessPiece.Type.KING) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(fx, fy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -1026,11 +1098,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(offX, ppy);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(fx, ppy));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor() && enemy.getType() != ChessPiece.Type.KING) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, ppy), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(fx, ppy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -1043,11 +1117,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(offX, offY);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(fx, fy));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor() && enemy.getType() != ChessPiece.Type.KING) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(fx, fy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -1060,11 +1136,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(ppx, offY);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
-						piece.moveTo(new Vector2f(ppx, fy));
-						swapSides(piece.getColor());
-					});
+							pieces.forEach(ChessPiece::unsetLastPosition);
+							piece.moveTo(new Vector2f(ppx, fy));
+							swapSides(piece.getColor());
+						});
 					} else if (enemy.getColor() != piece.getColor() && enemy.getType() != ChessPiece.Type.KING) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(ppx, fy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -1077,11 +1155,13 @@ public class BoardManager {
 					var enemy = getPieceAtPosition(offX, offY);
 					if (enemy == null) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(fx, fy));
 							swapSides(piece.getColor());
 						});
 					} else if (enemy.getColor() != piece.getColor() && enemy.getType() != ChessPiece.Type.KING) {
 						moveActions.put(BoardFramebuffer.Data.generateBoardPosId(offX, offY), () -> {
+							pieces.forEach(ChessPiece::unsetLastPosition);
 							piece.moveTo(new Vector2f(fx, fy));
 							enemy.setPosition(getOutPosition(piece.getColor()));
 							enemy.setInPlay(false);
@@ -1101,6 +1181,7 @@ public class BoardManager {
 						var castle = getPieceAtPosition(ppx - 3, ppy);
 						if (castle != null && castle.isNotMoved() && castle.getType() == ChessPiece.Type.ROOK && castle.getColor() == piece.getColor()) {
 							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx - 2, ppy), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
 								piece.moveTo(new Vector2f(ppx - 2, ppy));
 								castle.moveTo(new Vector2f(ppx - 1, ppy));
 								swapSides(piece.getColor());
@@ -1120,6 +1201,7 @@ public class BoardManager {
 						var castle = getPieceAtPosition(ppx + 4, ppy);
 						if (castle != null && castle.isNotMoved() && castle.getType() == ChessPiece.Type.ROOK && castle.getColor() == piece.getColor()) {
 							moveActions.put(BoardFramebuffer.Data.generateBoardPosId(ppx + 2, ppy), () -> {
+								pieces.forEach(ChessPiece::unsetLastPosition);
 								piece.moveTo(new Vector2f(ppx + 2, ppy));
 								castle.moveTo(new Vector2f(ppx + 1, ppy));
 								swapSides(piece.getColor());

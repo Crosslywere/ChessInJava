@@ -2,6 +2,7 @@ package com.crossly.chess;
 
 import com.crossly.engine.graphics.Model;
 import org.joml.Vector2f;
+import org.joml.Vector2i;
 import org.joml.Vector3f;
 
 public class ChessPiece {
@@ -46,12 +47,14 @@ public class ChessPiece {
 	private Vector2f position;
 	private boolean moved = false;
 	private boolean inPlay = true;
+	private Vector2i lastPosition;
 
 	public ChessPiece(int pieceId, Type type, Color color, Vector2f position) {
 		this.pieceId = pieceId;
 		this.type = type;
 		this.color = color;
 		this.position = position;
+		lastPosition = new Vector2i();
 	}
 
 	public ChessPiece(String param, Color color) throws IllegalArgumentException {
@@ -115,6 +118,7 @@ public class ChessPiece {
 	}
 
 	public void moveTo(Vector2f position) {
+		lastPosition = new Vector2i((int) this.position.x(), (int) this.position.y());
 		setPosition(position);
 		this.moved = true;
 	}
@@ -129,6 +133,14 @@ public class ChessPiece {
 
 	public void setInPlay(boolean inPlay) {
 		this.inPlay = inPlay;
+	}
+
+	public Vector2i getLastPosition() {
+		return lastPosition;
+	}
+
+	public void unsetLastPosition() {
+		lastPosition = new Vector2i();
 	}
 
 	public static void destroyModels() {
