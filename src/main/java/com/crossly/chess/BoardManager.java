@@ -139,7 +139,7 @@ public class BoardManager {
 				}else if (line.contains("#BLACK")) {
 					current = ChessPiece.Color.BLACK;
 					continue;
-				} else if (line.contains("#EXTRA") && scn.hasNextLine()) {
+				} else if (line.contains("#TURN") && scn.hasNextLine()) {
 					current = null;
 					continue;
 				}
@@ -280,9 +280,7 @@ public class BoardManager {
 			}
 			if (selectedPiece != null) {
 				generateMoves(selectedPiece);
-				if (checkingPiece != null) {
-					cullUnsafe();
-				}
+				cullUnsafe();
 			}
 		}
 		selected = selectedPiece != null;
@@ -307,7 +305,7 @@ public class BoardManager {
 		for (var piece : pieces.stream().filter(cp -> ChessPiece.Color.BLACK == cp.getColor()).toList()) {
 			saveData.append(piece.toString()).append('\n');
 		}
-		saveData.append("#EXTRA\n");
+		saveData.append("#TURN\n");
 		saveData.append(turn.name()).append('\n');
 		return saveData.toString();
 	}
@@ -326,7 +324,7 @@ public class BoardManager {
 
 	private void swapSides(ChessPiece.Color color) {
 		if (selectedPiece != null) {
-			var takeMoves =  generateTakeMoves(selectedPiece);
+			var takeMoves =  generateTakeMoves(selectedPiece, 0, 0);
 			var king = pieces.stream().filter(piece -> piece.getType() == ChessPiece.Type.KING && piece.getColor() != color).findFirst().orElse(null);
 			if (king != null) {
 				int kp = BoardFramebuffer.Data.generateBoardPosId(king.getPosition());
@@ -335,6 +333,7 @@ public class BoardManager {
 		}
 		selectedPiece = null;
 		selected = false;
+		moveActions.clear();
 		turn = color == ChessPiece.Color.WHITE ? ChessPiece.Color.BLACK : ChessPiece.Color.WHITE;
 		switchingSides = true;
 	}
@@ -1213,7 +1212,7 @@ public class BoardManager {
 		}
 	}
 
-	private ArrayList<Integer> generateTakeMoves(ChessPiece piece) {
+	private ArrayList<Integer> generateTakeMoves(ChessPiece piece, int endPosId, int ignorePosId) {
 		ArrayList<Integer> possibleMoveIds = new ArrayList<>();
 		int ppx = (int) piece.getPosition().x();
 		int ppy = (int) piece.getPosition().y();
@@ -1226,7 +1225,7 @@ public class BoardManager {
 				if (getPieceAtPosition(ppx - 1, ppy + dir) != null && ppx - 1 > 0 && ppy + dir > 0 && ppy + dir <= 8) {
 					possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx - 1, ppy + dir));
 				}
-				// En passant
+				// En passant moves
 				if (piece.getColor() == ChessPiece.Color.WHITE) {
 					if (ppy == 5 && getPieceAtPosition(ppx + 1, ppy) != null) {
 						possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx + 1, ppy));
@@ -1248,8 +1247,13 @@ public class BoardManager {
 					if (ppx + i <= 8) {
 						if (getPieceAtPosition(ppx + i, ppy) == null || getPieceAtPosition(ppx + i, ppy).getType() == ChessPiece.Type.KING) {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx + i, ppy));
+							if (possibleMoveIds.getLast() == endPosId) {
+								break;
+							}
 						} else {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx + i, ppy));
+							if (possibleMoveIds.getLast() == ignorePosId)
+								continue;
 							break;
 						}
 					} else {
@@ -1260,8 +1264,13 @@ public class BoardManager {
 					if (ppx - i > 0) {
 						if (getPieceAtPosition(ppx - i, ppy) == null || getPieceAtPosition(ppx - i, ppy).getType() == ChessPiece.Type.KING) {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx - i, ppy));
+							if (possibleMoveIds.getLast() == endPosId) {
+								break;
+							}
 						} else {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx - i, ppy));
+							if (possibleMoveIds.getLast() == ignorePosId)
+								continue;
 							break;
 						}
 					} else {
@@ -1272,8 +1281,13 @@ public class BoardManager {
 					if (ppy + i <= 8) {
 						if (getPieceAtPosition(ppx, ppy + i) == null || getPieceAtPosition(ppx, ppy + i).getType() == ChessPiece.Type.KING) {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx, ppy + i));
+							if (possibleMoveIds.getLast() == endPosId) {
+								break;
+							}
 						} else {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx, ppy + i));
+							if (possibleMoveIds.getLast() == ignorePosId)
+								continue;
 							break;
 						}
 					} else {
@@ -1284,8 +1298,13 @@ public class BoardManager {
 					if (ppy + i > 0) {
 						if (getPieceAtPosition(ppx, ppy - i) == null || getPieceAtPosition(ppx, ppy - i).getType() == ChessPiece.Type.KING) {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx, ppy - i));
+							if (possibleMoveIds.getLast() == endPosId) {
+								break;
+							}
 						} else {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx, ppy - i));
+							if (possibleMoveIds.getLast() == ignorePosId)
+								continue;
 							break;
 						}
 					} else {
@@ -1324,8 +1343,13 @@ public class BoardManager {
 					if (ppx + i <= 8 && ppy + i <= 8) {
 						if (getPieceAtPosition(ppx + i, ppy + i) == null || getPieceAtPosition(ppx + i, ppy + i).getType() == ChessPiece.Type.KING) {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx + i, ppy + i));
+							if (possibleMoveIds.getLast() == endPosId) {
+								break;
+							}
 						} else {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx + i, ppy + i));
+							if (possibleMoveIds.getLast() == ignorePosId)
+								continue;
 							break;
 						}
 					} else
@@ -1333,10 +1357,15 @@ public class BoardManager {
 				}
 				for (int i = 1; i <= 7; i++) {
 					if (ppx + i <= 8 && ppy - i > 0) {
-						if (getPieceAtPosition(ppx + i, ppy - i) == null || getPieceAtPosition(ppx + i, ppy - i).getType() == ChessPiece.Type.KING)
+						if (getPieceAtPosition(ppx + i, ppy - i) == null || getPieceAtPosition(ppx + i, ppy - i).getType() == ChessPiece.Type.KING) {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx + i, ppy - i));
-						else {
+						if (possibleMoveIds.getLast() == endPosId) {
+							break;
+						}
+					} else {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx + i, ppy - i));
+							if (possibleMoveIds.getLast() == ignorePosId)
+								continue;
 							break;
 						}
 					} else
@@ -1344,10 +1373,15 @@ public class BoardManager {
 				}
 				for (int i = 1; i <= 7; i++) {
 					if (ppx - i > 0 && ppy - i > 0) {
-						if (getPieceAtPosition(ppx - i, ppy - i) == null || getPieceAtPosition(ppx - i, ppy - i).getType() == ChessPiece.Type.KING)
+						if (getPieceAtPosition(ppx - i, ppy - i) == null || getPieceAtPosition(ppx - i, ppy - i).getType() == ChessPiece.Type.KING) {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx - i, ppy - i));
-						else {
+						if (possibleMoveIds.getLast() == endPosId) {
+							break;
+						}
+					} else {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx - i, ppy - i));
+							if (possibleMoveIds.getLast() == ignorePosId)
+								continue;
 							break;
 						}
 					} else
@@ -1355,10 +1389,15 @@ public class BoardManager {
 				}
 				for (int i = 1; i <= 7; i++) {
 					if (ppx - i > 0 && ppy + i <= 8) {
-						if (getPieceAtPosition(ppx - i, ppy + i) == null || getPieceAtPosition(ppx - i, ppy + i).getType() == ChessPiece.Type.KING)
+						if (getPieceAtPosition(ppx - i, ppy + i) == null || getPieceAtPosition(ppx - i, ppy + i).getType() == ChessPiece.Type.KING) {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx - i, ppy + i));
-						else {
+							if (possibleMoveIds.getLast() == endPosId) {
+								break;
+							}
+						} else {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx - i, ppy + i));
+							if (possibleMoveIds.getLast() == ignorePosId)
+								continue;
 							break;
 						}
 					} else
@@ -1370,8 +1409,13 @@ public class BoardManager {
 					if (ppx + i <= 8) {
 						if (getPieceAtPosition(ppx + i, ppy) == null || getPieceAtPosition(ppx + i, ppy).getType() == ChessPiece.Type.KING) {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx + i, ppy));
+							if (possibleMoveIds.getLast() == endPosId) {
+								break;
+							}
 						} else {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx + i, ppy));
+							if (possibleMoveIds.getLast() == ignorePosId)
+								continue;
 							break;
 						}
 					} else {
@@ -1382,8 +1426,13 @@ public class BoardManager {
 					if (ppx - i > 0) {
 						if (getPieceAtPosition(ppx - i, ppy) == null || getPieceAtPosition(ppx - i, ppy).getType() == ChessPiece.Type.KING) {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx - i, ppy));
+							if (possibleMoveIds.getLast() == endPosId) {
+								break;
+							}
 						} else {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx - i, ppy));
+							if (possibleMoveIds.getLast() == ignorePosId)
+								continue;
 							break;
 						}
 					} else {
@@ -1394,8 +1443,13 @@ public class BoardManager {
 					if (ppy + i <= 8) {
 						if (getPieceAtPosition(ppx, ppy + i) == null || getPieceAtPosition(ppx, ppy + i).getType() == ChessPiece.Type.KING) {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx, ppy + i));
+							if (possibleMoveIds.getLast() == endPosId) {
+								break;
+							}
 						} else {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx, ppy + i));
+							if (possibleMoveIds.getLast() == ignorePosId)
+								continue;
 							break;
 						}
 					} else {
@@ -1406,8 +1460,13 @@ public class BoardManager {
 					if (ppy + i > 0) {
 						if (getPieceAtPosition(ppx, ppy - i) == null || getPieceAtPosition(ppx, ppy - i).getType() == ChessPiece.Type.KING) {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx, ppy - i));
+							if (possibleMoveIds.getLast() == endPosId) {
+								break;
+							}
 						} else {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx, ppy - i));
+							if (possibleMoveIds.getLast() == ignorePosId)
+								continue;
 							break;
 						}
 					} else {
@@ -1418,8 +1477,13 @@ public class BoardManager {
 					if (ppx + i <= 8 && ppy + i <= 8) {
 						if (getPieceAtPosition(ppx + i, ppy + i) == null || getPieceAtPosition(ppx + i, ppy + i).getType() == ChessPiece.Type.KING) {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx + i, ppy + i));
+							if (possibleMoveIds.getLast() == endPosId) {
+								break;
+							}
 						} else {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx + i, ppy + i));
+							if (possibleMoveIds.getLast() == ignorePosId)
+								continue;
 							break;
 						}
 					} else
@@ -1427,10 +1491,15 @@ public class BoardManager {
 				}
 				for (int i = 1; i <= 7; i++) {
 					if (ppx + i <= 8 && ppy - i > 0) {
-						if (getPieceAtPosition(ppx + i, ppy - i) == null || getPieceAtPosition(ppx + i, ppy - i).getType() == ChessPiece.Type.KING)
+						if (getPieceAtPosition(ppx + i, ppy - i) == null || getPieceAtPosition(ppx + i, ppy - i).getType() == ChessPiece.Type.KING) {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx + i, ppy - i));
-						else {
+							if (possibleMoveIds.getLast() == endPosId) {
+								break;
+							}
+						} else {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx + i, ppy - i));
+							if (possibleMoveIds.getLast() == ignorePosId)
+								continue;
 							break;
 						}
 					} else
@@ -1438,10 +1507,15 @@ public class BoardManager {
 				}
 				for (int i = 1; i <= 7; i++) {
 					if (ppx - i > 0 && ppy - i > 0) {
-						if (getPieceAtPosition(ppx - i, ppy - i) == null || getPieceAtPosition(ppx - i, ppy - i).getType() == ChessPiece.Type.KING)
+						if (getPieceAtPosition(ppx - i, ppy - i) == null || getPieceAtPosition(ppx - i, ppy - i).getType() == ChessPiece.Type.KING) {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx - i, ppy - i));
-						else {
+							if (possibleMoveIds.getLast() == endPosId) {
+								break;
+							}
+						} else {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx - i, ppy - i));
+							if (possibleMoveIds.getLast() == ignorePosId)
+								continue;
 							break;
 						}
 					} else
@@ -1449,10 +1523,15 @@ public class BoardManager {
 				}
 				for (int i = 1; i <= 7; i++) {
 					if (ppx - i > 0 && ppy + i <= 8) {
-						if (getPieceAtPosition(ppx - i, ppy + i) == null || getPieceAtPosition(ppx - i, ppy + i).getType() == ChessPiece.Type.KING)
+						if (getPieceAtPosition(ppx - i, ppy + i) == null || getPieceAtPosition(ppx - i, ppy + i).getType() == ChessPiece.Type.KING) {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx - i, ppy + i));
-						else {
+							if (possibleMoveIds.getLast() == endPosId) {
+								break;
+							}
+						} else {
 							possibleMoveIds.add(BoardFramebuffer.Data.generateBoardPosId(ppx - i, ppy + i));
+							if (possibleMoveIds.getLast() == ignorePosId)
+								continue;
 							break;
 						}
 					} else
@@ -1509,18 +1588,47 @@ public class BoardManager {
 		}
 	}
 
+	private ArrayList<Integer> generateAllMoveIds(ChessPiece piece) {
+		var result = generateNonTakeMoves(piece);
+		result.addAll(generateTakeMoves(piece,0, 0));
+		return result;
+	}
+
 	private void cullUnsafe() {
 		if (selectedPiece != null) {
-			if (selectedPiece.getType() == ChessPiece.Type.KING) {
-				for (var piece : pieces.stream().filter(cp -> cp.getColor() != selectedPiece.getColor()).toList()) {
-					var takes = generateTakeMoves(piece);
-					for (var take : takes) {
-						moveActions.remove(take);
+			if (!isChecked()) {
+				switch (selectedPiece.getType()) {
+					case KING -> {
+						for (var piece : pieces.stream().filter(cp -> cp.getColor() != selectedPiece.getColor()).toList()) {
+							var takes = generateTakeMoves(piece, 0, 0);
+							for (var take : takes) {
+								moveActions.remove(take);
+							}
+						}
+					}
+					default -> {
+						var king = pieces.stream().filter(cp -> cp.getColor() == selectedPiece.getColor() && cp.getType() == ChessPiece.Type.KING)
+								.findFirst().orElse(null);
+						if (king == null) {
+							return;
+						}
+						int kingPosId = BoardFramebuffer.Data.generateBoardPosId(king.getPosition());
+						var allPossibleMoves = generateAllMoveIds(selectedPiece);
+						int currentPosId = BoardFramebuffer.Data.generateBoardPosId(selectedPiece.getPosition());
+						for (var enemy : pieces.stream().filter(cp -> cp.getColor() != selectedPiece.getColor()).toList()) {
+							int enemyPosId = BoardFramebuffer.Data.generateBoardPosId(enemy.getPosition());
+							for (var possibleMove : allPossibleMoves) {
+								var enemyTakes = generateTakeMoves(enemy, possibleMove, currentPosId);
+								if (enemyTakes.contains(kingPosId) && enemyPosId != possibleMove) {
+									moveActions.remove(possibleMove);
+								}
+							}
+						}
 					}
 				}
+			} else {
+				// Validate that moves can remove the check state by checking if a move can remove the piece causing the check state or by blocking the piece causing the check state
 			}
-
-			// TODO Remove moves that don't take the checking piece or block the checking piece
 		}
 	}
 }
