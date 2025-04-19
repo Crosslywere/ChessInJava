@@ -1597,31 +1597,28 @@ public class BoardManager {
 	private void cullUnsafe() {
 		if (selectedPiece != null) {
 			if (!isChecked()) {
-				switch (selectedPiece.getType()) {
-					case KING -> {
-						for (var piece : pieces.stream().filter(cp -> cp.getColor() != selectedPiece.getColor()).toList()) {
-							var takes = generateTakeMoves(piece, 0, 0);
-							for (var take : takes) {
-								moveActions.remove(take);
-							}
+				if (Objects.requireNonNull(selectedPiece.getType()) == ChessPiece.Type.KING) {
+					for (var piece : pieces.stream().filter(cp -> cp.getColor() != selectedPiece.getColor()).toList()) {
+						var takes = generateTakeMoves(piece, 0, 0);
+						for (var take : takes) {
+							moveActions.remove(take);
 						}
 					}
-					default -> {
-						var king = pieces.stream().filter(cp -> cp.getColor() == selectedPiece.getColor() && cp.getType() == ChessPiece.Type.KING)
-								.findFirst().orElse(null);
-						if (king == null) {
-							return;
-						}
-						int kingPosId = BoardFramebuffer.Data.generateBoardPosId(king.getPosition());
-						var allPossibleMoves = generateAllMoveIds(selectedPiece);
-						int currentPosId = BoardFramebuffer.Data.generateBoardPosId(selectedPiece.getPosition());
-						for (var enemy : pieces.stream().filter(cp -> cp.getColor() != selectedPiece.getColor()).toList()) {
-							int enemyPosId = BoardFramebuffer.Data.generateBoardPosId(enemy.getPosition());
-							for (var possibleMove : allPossibleMoves) {
-								var enemyTakes = generateTakeMoves(enemy, possibleMove, currentPosId);
-								if (enemyTakes.contains(kingPosId) && enemyPosId != possibleMove) {
-									moveActions.remove(possibleMove);
-								}
+				} else {
+					var king = pieces.stream().filter(cp -> cp.getColor() == selectedPiece.getColor() && cp.getType() == ChessPiece.Type.KING)
+							.findFirst().orElse(null);
+					if (king == null) {
+						return;
+					}
+					int kingPosId = BoardFramebuffer.Data.generateBoardPosId(king.getPosition());
+					var allPossibleMoves = generateAllMoveIds(selectedPiece);
+					int currentPosId = BoardFramebuffer.Data.generateBoardPosId(selectedPiece.getPosition());
+					for (var enemy : pieces.stream().filter(cp -> cp.getColor() != selectedPiece.getColor()).toList()) {
+						int enemyPosId = BoardFramebuffer.Data.generateBoardPosId(enemy.getPosition());
+						for (var possibleMove : allPossibleMoves) {
+							var enemyTakes = generateTakeMoves(enemy, possibleMove, currentPosId);
+							if (enemyTakes.contains(kingPosId) && enemyPosId != possibleMove) {
+								moveActions.remove(possibleMove);
 							}
 						}
 					}
