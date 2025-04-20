@@ -81,7 +81,7 @@ public class ChessGame extends Engine {
 			renderOverlay();
 		else if (boardManager.isPiecePromotable())
 			renderPromotionOverlay();
-		if (boardManager.isChecked())
+		else if (boardManager.isChecked())
 			renderCheckOverlay();
 	}
 
