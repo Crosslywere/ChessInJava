@@ -44,6 +44,8 @@ It can be played normally with basic moves & special moves.
 But no detection of Check Mate has been implemented, and the game doesn't end when the king is taken.
 Basic instructions are rendered on the screen once the application is started.
 
+Pressing `Esc` brings up the overlay unless it is already open, in which case it closes the application.
+
 ### Currently Focused On
 
 - Detecting check mates

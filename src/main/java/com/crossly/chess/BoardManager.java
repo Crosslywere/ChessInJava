@@ -332,7 +332,7 @@ public class BoardManager {
 	private void swapSides(ChessPiece.Color color) {
 		if (selectedPiece != null) {
 			var takeMoves =  generateTakeMoves(selectedPiece, 0, 0);
-			var king = pieces.stream().filter(piece -> piece.getType() == ChessPiece.Type.KING && piece.getColor() != color).findFirst().orElse(null);
+			var king = pieces.stream().filter(piece -> piece.getType() == ChessPiece.Type.KING && piece.getColor() != color && piece.isInPlay()).findFirst().orElse(null);
 			if (king != null) {
 				int kp = BoardFramebuffer.Data.generateBoardPosId(king.getPosition());
 				checkingPiece = takeMoves.contains(kp) ? selectedPiece : null;
@@ -1603,38 +1603,64 @@ public class BoardManager {
 
 	private void cullUnsafe() {
 		if (selectedPiece != null) {
-			if (Objects.requireNonNull(selectedPiece.getType()) == ChessPiece.Type.KING) {
-				for (var piece : pieces.stream().filter(cp -> cp.getColor() != selectedPiece.getColor()).toList()) {
+			if (selectedPiece.getType() == ChessPiece.Type.KING) {
+				for (var piece : pieces.stream().filter(cp -> cp.getColor() != selectedPiece.getColor() && cp.isInPlay()).toList()) {
 					var takes = generateTakeMoves(piece, 0, 0);
 					for (var take : takes) {
 						moveActions.remove(take);
 					}
 				}
-			} else {
-				var king = pieces.stream().filter(cp -> cp.getColor() == selectedPiece.getColor() && cp.getType() == ChessPiece.Type.KING)
-						.findFirst().orElse(null);
-				if (king == null) {
-					return;
-				}
-				int kingPosId = BoardFramebuffer.Data.generateBoardPosId(king.getPosition());
-				var allPossibleMoves = generateAllMoveIds(selectedPiece);
-				int currentPosId = BoardFramebuffer.Data.generateBoardPosId(selectedPiece.getPosition());
-				for (var enemy : pieces.stream().filter(cp -> cp.getColor() != selectedPiece.getColor()).toList()) {
-					int enemyPosId = BoardFramebuffer.Data.generateBoardPosId(enemy.getPosition());
-					for (var possibleMove : allPossibleMoves) {
-						var enemyTakes = generateTakeMoves(enemy, possibleMove, currentPosId);
+				return;
+			}
+			var king = pieces.stream().filter(cp -> cp.getColor() == selectedPiece.getColor() && cp.getType() == ChessPiece.Type.KING && cp.isInPlay())
+					.findFirst().orElse(null);
+			if (king == null)
+				return;
+			int kingPosId = BoardFramebuffer.Data.generateBoardPosId(king.getPosition());
+			var allPossibleMoves = generateAllMoveIds(selectedPiece);
+			int currentPosId = BoardFramebuffer.Data.generateBoardPosId(selectedPiece.getPosition());
+			for (var enemy : pieces.stream().filter(cp -> cp.getColor() != selectedPiece.getColor()).toList()) {
+				int enemyPosId = BoardFramebuffer.Data.generateBoardPosId(enemy.getPosition());
+				for (var possibleMove : allPossibleMoves) {
+					var enemyTakes = generateTakeMoves(enemy, possibleMove, currentPosId);
+					if (enemyTakes.contains(kingPosId) && enemyPosId != possibleMove) {
+						moveActions.remove(possibleMove);
+					}
+					if (isChecked()) {
+						enemyTakes = generateTakeMoves(checkingPiece, possibleMove, currentPosId);
 						if (enemyTakes.contains(kingPosId) && enemyPosId != possibleMove) {
 							moveActions.remove(possibleMove);
-						}
-						if (isChecked()) {
-							enemyTakes = generateTakeMoves(checkingPiece, possibleMove, currentPosId);
-							if (enemyTakes.contains(kingPosId) && enemyPosId != possibleMove) {
-								moveActions.remove(possibleMove);
-							}
 						}
 					}
 				}
 			}
 		}
 	}
+
+//  Code to validate if the current state of the game is checkmate.
+
+//	private void validateCheckmate() {
+//		checkMate = false;
+//		if (isChecked()) {
+//			var defKing = pieces.stream().filter(piece -> piece.getType() == ChessPiece.Type.KING && piece.getColor() != checkingPiece.getColor() && piece.isInPlay()).findFirst().orElse(null);
+//			if (defKing == null) {
+//				checkMate = true;
+//				return;
+//			}
+//			int defKingPosId = BoardFramebuffer.Data.generateBoardPosId(defKing.getPosition());
+//			for (var defensivePiece : pieces.stream().filter(piece -> piece.getColor() != checkingPiece.getColor() && piece.isInPlay()).toList()) {
+//				int defPiecePosId = BoardFramebuffer.Data.generateBoardPosId(defensivePiece.getPosition());
+//				var defensiveMoves = generateAllMoveIds(defensivePiece);
+//				for (var defMove : defensiveMoves) {
+//					var attackingMoves = generateTakeMoves(checkingPiece, defMove, defPiecePosId);
+//					if (attackingMoves.contains(defKingPosId)) {
+//						defensiveMoves.remove(defMove);
+//					}
+//				}
+//				if (!defensiveMoves.isEmpty()) {
+//					return;
+//				}
+//			}
+//		}
+//	}
 }
