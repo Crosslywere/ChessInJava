@@ -75,6 +75,8 @@ public class Input {
 	public static final int KEY_LEFT_CTRL = GLFW_KEY_LEFT_CONTROL;
 	public static final int KEY_LEFT_ALT = GLFW_KEY_LEFT_ALT;
 	public static final int KEY_RIGHT_CTRL = GLFW_KEY_RIGHT_CONTROL;
+	public static final int KEY_RIGHT_ALT = GLFW_KEY_RIGHT_ALT;
+	public static final int KEY_MENU = GLFW_KEY_MENU;
 	public static final int KEY_RIGHT_SHIFT = GLFW_KEY_RIGHT_SHIFT;
 	public static final int KEY_PERIOD = GLFW_KEY_PERIOD;
 	public static final int KEY_COMMA = GLFW_KEY_COMMA;
